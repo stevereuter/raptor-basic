@@ -138,6 +138,28 @@ IF !Y THEN RETURN 0
 RETURN X\*Y
 ENDFN
 
+## Temporary Block Scoped Variables
+
+Variables defined with LET and CONST have global scope and can be addressed anywhere. Temporary variables can also be defined with block scope, and will only be available in that block. You can see this used in FOR loops and custom functions: 
+
+FOR BYTE I = 1 TO 10
+REN I IS ONLY AVAILABLE HERE AND
+REN WILL PREVENT ACCESS TO A GLOBAL I
+NEXT
+
+Custom functions use these as parameters: 
+
+DEF FN AR(BYTE X, BYTE Y)
+REN X AND Y ARE ONLY AVAILABLE HERE
+ENDIF
+
+But you can also add them inside the scope: 
+
+DEF FN AR(BYTE X, BYTE Y)
+INT Z = X * Y
+REN X, Y, AND Z ARE ONLY AVAILABLE HERE
+ENDIF
+
 ## BASIC Functions and Keywords
 
 ### REM
