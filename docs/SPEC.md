@@ -4,8 +4,10 @@
 
 Will be set to 0 without a default value.
 
+```basic
 LET BYTE B
 LET INT I
+```
 
 Setting a default will use double the memory, one for the actual storage location and 1 (byte or int) for the default value.
 
@@ -140,23 +142,23 @@ ENDFN
 
 ## Temporary Block Scoped Variables
 
-Variables defined with LET and CONST have global scope and can be addressed anywhere. Temporary variables can also be defined with block scope, and will only be available in that block. You can see this used in FOR loops and custom functions: 
+Variables defined with LET and CONST have global scope and can be addressed anywhere. Temporary variables can also be defined with block scope, and will only be available in that block. You can see this used in FOR loops and custom functions:
 
 FOR BYTE I = 1 TO 10
 REN I IS ONLY AVAILABLE HERE AND
 REN WILL PREVENT ACCESS TO A GLOBAL I
 NEXT
 
-Custom functions use these as parameters: 
+Custom functions use these as parameters:
 
 DEF FN AR(BYTE X, BYTE Y)
 REN X AND Y ARE ONLY AVAILABLE HERE
 ENDIF
 
-But you can also add them inside the scope: 
+But you can also add them inside the scope:
 
 DEF FN AR(BYTE X, BYTE Y)
-INT Z = X * Y
+INT Z = X \* Y
 REN X, Y, AND Z ARE ONLY AVAILABLE HERE
 ENDIF
 
@@ -218,12 +220,16 @@ NEXT
 
 ### BREAK
 
+The BREAK keyword can be used to break out of the current block. It is essentially a GOTO without a line number. It will store the register of end block part of code to jump to and do a GOTO to that position.
+
 REM:DRAW
 PRINT "DRAWING"
-BREAK
+BREAK (this is the same GOTO the line with ENDSUB)
+REM SKIPPED
+ENDSUB
 
 FOR I IN [1, 2, 3]
-IF I == 2 THEN BREAK
+IF I == 2 THEN BREAK (this is the same as a GOTO after the NEXT)
 NEXT
 
 ### END
@@ -272,6 +278,10 @@ R = RIGHT(SV, 2)
 
 ### Zero Page usage
 
+#### Input Layout
+
+#### Run Time Layout
+
 | Register | Use                      |
 | -------- | ------------------------ |
 | $03      | status                   |
@@ -288,16 +298,42 @@ R = RIGHT(SV, 2)
 
 ### Type system
 
+#### General
+
 | Bit     | Description | Values                                      |
 | ------- | ----------- | ------------------------------------------- |
 | 1       | source      | 0: system 1: user                           |
 | 2 and 3 | data        | 00: byte, 01: int, 10: string, 11: function |
 | 4       | mutable     | 0: static, 1: variable                      |
 | 5       | array       | 0: single, 1: array                         |
-| 6       | value       | 0: stored, 1: reference                     |
-| 7 and 8 | options     | func param count 0 - 3                      |
+| 6       | value       | 0: value, 1: reference                      |
+| 7 and 8 | options     | func param count/scope level 0 - 3          |
+
+#### Variables
+
+| Bit     | Description | Values                                      |
+| ------- | ----------- | ------------------------------------------- |
+| 1       | source      | 1: user                                     |
+| 2 and 3 | data        | 00: byte, 01: int, 10: string, 11: function |
+| 4       | mutable     | 0: static, 1: variable                      |
+| 5       | array       | 0: single, 1: array                         |
+| 6       | value       | 0: value, 1: reference                      |
+| 7 and 8 | options     | scope level 0 - 3                           |
+
+#### System Functions
+
+| Bit     | Description | Values                 |
+| ------- | ----------- | ---------------------- |
+| 1       | source      | 0: system              |
+| 2 and 3 | data        | 11: function           |
+| 4       | mutable     | 0: static              |
+| 5       | array       | 0: single              |
+| 6       | value       | 1: reference           |
+| 7 and 8 | options     | func param count 0 - 3 |
 
 ### Line entry
+
+Nested functions will be written first to anonymous variables which will be referenced as the parent functions parameter.
 
 ### AOT line linker
 
@@ -305,4 +341,13 @@ R = RIGHT(SV, 2)
 
 ### AOT block scoped variable resolver
 
+Functions and subroutines will push the return register into the hardware stack. The end keywords will pop the register and jump back to the program.
+
+GOSUB and FN will push the next register into the stack. ENDSUB and ENDFN will pull register and jump.
+Inline FN will do the same thing with a hidden ENDFN keyword at the end of the line.
+
 ### Run time processor
+
+```
+
+```
