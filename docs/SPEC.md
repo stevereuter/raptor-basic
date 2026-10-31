@@ -1,66 +1,115 @@
 # Raptor BASIC Specifications
 
-## Number Variables
+Raptor BASIC is a multi-level, Ahead-of-Time (AOT) compiled interpreter for the Commodore 64. It is specifically designed to be:
 
-Will be set to 0 without a default value.
+- **Fast:** Code is fully tokenized, linked, and optimized before execution ever starts.
+- **Accessible:** Native on-hardware development — runs entirely on the C64 with no external PC or cross-compiler required, while offering a modern, clean syntax.
+- **Efficient:** Only compiled bytecode is stored, with variable allocations and references resolved inline.
+
+## The Compilation Pipeline
+
+Raptor BASIC operates through four distinct processing phases:
+
+- **Entry:** Converts source code text into intermediate byte data.
+- **Linker:** Performs pre-run symbol resolution and pointer linking.
+- **Runtime:** Executes the flattened bytecode stream with maximum 6502 speed.
+- **List:** Reconstructs readable source lines back from the compiled byte data.
+
+## Performance Comparison: C64 BASIC 2.0 vs. Raptor BASIC
+
+### Memory Layout Example
+
+**C64 BASIC 2.0 (20 bytes total):** Allocates 13 bytes for code and 7 bytes for the variable, split across separate memory locations.
+`basic
+    1000 X = 255
+    `
+
+````
+
+***Raptor BASIC *** (6 bytes total): Code and variable data are stored compactly inline.
 
 ```basic
-LET BYTE B
-LET INT I
-```
+1000 LET BYTE X = 255
+````
 
-Setting a default will use double the memory, one for the actual storage location and 1 (byte or int) for the default value.
+### Execution Speedups
 
-LET BYTE B = 255
-LET INT I = 1000
-Stored as PETSCII byte value
-LET CHAR C = "C"
+1. Variable Resolution: At runtime, C64 BASIC 2.0 must perform a lookup in its variable table every time X is referenced. The Raptor BASIC linker updates all variable references to direct pointers at compile time, making values instantly available.
+2. Control Flow (GOTO): Stock C64 BASIC has to sequentially traverse the program's linked list to find target line numbers during jumps. The Raptor BASIC linker replaces all line number references with direct memory pointers for instant jumps.
 
-LET BYTE A, B, C = 23, D, E = 100
+## Program Structure
 
-Fast, instead of linking all references with a pointer, all references will use the actual value.
-CONST BYTE B = 255
+### Zero Page usage
 
-CONST BYTE A = 10, B = 20, C = 20
+#### Input Layout
 
-## Arrays, Strings, and Queues
+#### Run Time Layout
 
-Define the size
-DIM BYTE[10] B
-Infer the size from the default
-DIM BYTE B = [1, 2, 3, 4]
+| Register | Use                            |
+| -------- | ------------------------------ |
+| $03      | status                         |
+| $04      | current position pointer (TBD) |
+| $06      | next position pointer (TBD)    |
+| $08      | return value holder            |
+| $0a      | first parameter holder         |
+| $0c      | second parameter holder        |
+| $0e      | third parameter holder         |
 
-LET STRING[10] SV
-LET STRING SV = "HELLO"
-Define the size and infer the length
-LET STRING[10] SV = "HELLO"
+### Program header
 
-CONST STRING SC = "JUST THIS"
+## Interpreter
 
-Define an array type list that can continuously grow by looping the indexes that are used. The 2 pointers would only be set to the same index when empty.
-DIM QUE BYTE[100] QB
-Add values to the top of the queue
-PUSH(QB, 10)
-PUSH(QB, 20)
-PUSH(QB, 30)
+### Type system
 
-[10, 20, 30]
+#### General
 
-Get the top value
-B = TOP(QB)
-30
+| Bit     | Description | Values                                      |
+| ------- | ----------- | ------------------------------------------- |
+| 1       | source      | 0: system 1: user                           |
+| 2 and 3 | data        | 00: byte, 01: int, 10: string, 11: function |
+| 4       | mutable     | 0: static, 1: variable                      |
+| 5       | array       | 0: single, 1: array                         |
+| 6       | value       | 0: value, 1: reference                      |
+| 7 and 8 | options     | func param count/scope level 0 - 3          |
 
-Get the bottom value
-B = BOT(QB)
-10
+#### Variables
 
-Return the bottom value while moving the bottom pointer up.
-B = POP(QB)
-10, [20, 30]
+| Bit     | Description | Values                                      |
+| ------- | ----------- | ------------------------------------------- |
+| 1       | source      | 1: user                                     |
+| 2 and 3 | data        | 00: byte, 01: int, 10: string, 11: function |
+| 4       | mutable     | 0: static, 1: variable                      |
+| 5       | array       | 0: single, 1: array                         |
+| 6       | value       | 0: value, 1: reference                      |
+| 7 and 8 | options     | scope level 0 - 3                           |
 
-Return the top value while moving the top pointer down.
-B = PULL(QB)
-30, [20]
+#### System Functions
+
+| Bit     | Description | Values                 |
+| ------- | ----------- | ---------------------- |
+| 1       | source      | 0: system              |
+| 2 and 3 | data        | 11: function           |
+| 4       | mutable     | 0: static              |
+| 5       | array       | 0: single              |
+| 6       | value       | 1: reference           |
+| 7 and 8 | options     | func param count 0 - 3 |
+
+### Line entry
+
+Nested functions will be written first to anonymous variables which will be referenced as the parent functions parameter.
+
+### AOT line linker
+
+### AOT variable resolver
+
+### AOT block scoped variable resolver
+
+Functions and subroutines will push the return register into the hardware stack. The end keywords will pop the register and jump back to the program.
+
+GOSUB and FN will push the next register into the stack. ENDSUB and ENDFN will pull register and jump.
+Inline FN will do the same thing with a hidden ENDFN keyword at the end of the line.
+
+### Run time processor
 
 ## Assignment operators
 
@@ -128,8 +177,125 @@ XOR
 | 1 XOR 0 | 1 |
 | 1 XOR 1 | 0 |
 
-## User defined Functions
+## Language Paradigms: Subroutines vs. Functions
 
+Raptor BASIC makes a strict distinction between Subroutines (imperative commands) and Functions (value-returning operations). This design keeps high-level code readable while giving the compiler room to generate optimal bytecode.
+
+**_Subroutines_** (Imperative Commands)
+Subroutines perform actions or control program flow. They use a natural-language, clause-driven syntax with contextual keywords (such as STEP, TO, or FROM) to modify their behavior without wrapping parameters in heavy function calls.
+
+- Syntax Style: Natural keyword clauses, separated by commas or modifiers.
+- Return Value: None.
+- Side Effects: Directly alters system state, memory, or execution flow.
+
+Subroutine examples using contextual modifier keywords
+
+```Basic
+FOR I = 0 TO 100 STEP 2
+WRITE 1024, AR STEP 40
+```
+
+**_Functions_** (Functional Expressions)
+Functions transform input data into a single output value. They rely on strict functional scope marked by parentheses () to clarify operator precedence and nested parameter boundaries.
+
+- Syntax Style: Explicit parenthesized argument lists NAME(arg1, arg2).
+- Return Value: Evaluates to a typed result (BYTE, WORD, STR).
+- Placement: Used inline within assignments, logic checks, or passed as arguments into Subroutines.
+
+Function examples operating within expressions and subroutines
+
+```Basic
+LET BYTE X = ABS(Y)
+PRINT LEFT$(S, 1)
+```
+
+## System Stack
+
+The hardware stack is used when jumping to a function or subroutine so that the interpreter can return to the part of the progrem that if left. All system functions and subroutines do this automatically. For user define functions and subroutines this is handled with specific keywords.
+
+Used to push the current position into the stack:
+
+- [FN](#def-fn)
+- [GOSUB](#gosub)
+
+Use to pop the position off of the stack and continue the interpreter:
+
+- [ENDFN](#endfn)
+- [ENDSUB](#endsub)
+
+## System Keywords
+
+### BOT
+
+Returns the bottom index of a [QUE](#que). Unlike [POP](#pop) the bottom index is not changed leaving the value at the bottom of the QUE.
+
+```basic
+RETURN_VALUE = BOT(QUE_REFERENCE)
+B = BOT(Q)
+```
+
+### BREAK (TBD)
+
+TODO: this is not really needed as GOTO can be used to achieve the same goal, this would be syntactical sugar that would require some walking to resolve as it would essentially a target less GOTO
+
+The `BREAK` keyword can be used to break out of the current block. It is essentially a `GOTO` without a line number. It will store the register of end block part of code to jump to and do a `GOTO` to that position.
+
+```basic
+REM:DRAW
+PRINT "DRAWING"
+BREAK (this is the same GOTO the line with ENDSUB)
+REM SKIPPED
+ENDSUB
+
+FOR I IN [1, 2, 3]
+IF I == 2 THEN BREAK (this is the same as a GOTO after the NEXT)
+NEXT
+```
+
+### BYTE
+
+For defining a byte type variable or constant, see [CONST](#const) and [LET](#let), and a function for parsing a string to a byte.
+
+[Variable](#let) or type byte
+
+```basic
+LET BYTE B
+```
+
+[Constant](#const) of type byte
+
+```basic
+CONST BYTE CB = 25
+```
+
+A [block scoped variable](#temporary-block-scoped-variables) with type byte
+
+```basic
+FOR BYTE I = 0 TO 9
+PRINT I
+NEXT
+```
+
+The `BYTE` function can be used to convert a string to a byte
+
+```basic
+RETURN_BYTE = BYTE(STRING_VALUE)
+B = BYTE("255")
+```
+
+### CONST
+
+Saving a value as a constant instead of a variable will add speed as the value will actually be copied to all locations instead of the pointer reference. It will take up no more space than a variable but will avoid the lookup. Like variables, multiple constants can be defined inline.
+
+```basic
+CONST BYTE B = 255
+
+CONST BYTE A = 10, B = 20, C = 20
+```
+
+### DEF FN
+
+```basic
 DEF FN CB(INT A, INT B, INT C) => A*B*C
 
 DEF FN RD(BYTE D) => RND(D) + 1
@@ -139,45 +305,123 @@ IF !X THEN RETURN 0
 IF !Y THEN RETURN 0
 RETURN X\*Y
 ENDFN
+```
 
-## Temporary Block Scoped Variables
+#### RETURN
 
-Variables defined with LET and CONST have global scope and can be addressed anywhere. Temporary variables can also be defined with block scope, and will only be available in that block. You can see this used in FOR loops and custom functions:
+For setting the return value in a user defined function. This will also trigger a jump to the [ENDFN](#endfn) keword at the end of the block.
 
-FOR BYTE I = 1 TO 10
-REN I IS ONLY AVAILABLE HERE AND
-REN WILL PREVENT ACCESS TO A GLOBAL I
+#### ENDFN
+
+This is used to define the end of a block function.
+
+### DIM
+
+Define an array dimension of a specified type. A string cannot be defined as an array because it is actually an array type. See [STR](#str) for more details.
+
+`{type}{name x2}{size x2}{data...}`
+
+Define with an explicit size
+
+```basic
+DIM BYTE[10] B
+```
+
+Define with an implicit size
+
+```basic
+DIM BYTE B = [1, 2, 3, 4]
+```
+
+### END
+
+Stops the runtime interpreter.
+
+```basic
+END
+```
+
+### FOR
+
+For creating a loop based on a range or array.
+
+#### FOR TO
+
+Loop through a number range from a specified starting point, end point, and increment step. A block scoped variable is use to hold the index value. See [block scoped variables](#temporary-block-scoped-variables) for more details.
+
+Default single step increment
+
+```basic
+FOR TYPE INDEX_NAME = START_VALUE TO END_VALUE [STEP STEP_VALUE = 1]
+
+FOR BYTE I = 0 TO 10
+PRINT I
 NEXT
+```
 
-Custom functions use these as parameters:
+Increment with a different value.
 
-DEF FN AR(BYTE X, BYTE Y)
-REN X AND Y ARE ONLY AVAILABLE HERE
-ENDIF
+```basic
+FOR INT I = 0 TO 1000 STEP 100
+PRINT I
+NEXT
+```
 
-But you can also add them inside the scope:
+Use a decending index with a decrement.
 
-DEF FN AR(BYTE X, BYTE Y)
-INT Z = X \* Y
-REN X, Y, AND Z ARE ONLY AVAILABLE HERE
-ENDIF
+```basic
+FOR INT I = 100 TO 0 STEP -10
+PRINT I
+NEXT
+```
 
-## BASIC Functions and Keywords
+#### FOR IN
 
-### REM
+Loop through an array. A block scoped variable is use to hold the value of the current array element. See [block scoped variables](#temporary-block-scoped-variables) for more details.
 
-REM THIS IS A COMMENT
-REM:MAIN THIS CAN BE USED TO GOTO
+Use an array reference.
+
+```basic
+DIM BYTE BA = [1, 2, 3]
+
+FOR BYTE B IN BA
+PRINT B
+NEXT
+```
+
+Use an inline array constant.
+
+```basic
+FOR BYTE I IN [1, 2, 3]
+PRINT I
+NEXT
+```
 
 ### GOTO
 
+Used to jump to a different line in the program. A line number, variable, or [label](#labels) can be used for the target.
+
+```basic
 GOTO 10
+GOTO ST
 GOTO :MAIN
+```
 
 ### GOSUB
 
+Used to jump to a user defined [subroutine](#subroutine), and return when complete. A line number, variable, or [label](#labels) can be used for the target.
+
 GOSUB 500
+GOSUB DW
 GOSUB :DRAW
+
+#### Subroutine
+
+User defined subroutine definition. A subroutine is any block of code that ends with `ENDSUB`. This keyword is used to return to `GOSUB` command that called it. These should only be reached via a `GOSUB` due to how the [Stack](#system-stack) is used.
+
+#### ENDSUB
+
+Defines the end of a user subroutine. This is a trigger that will return the program to the code that called the subroutine.
 
 ### IF
 
@@ -197,156 +441,306 @@ PRINT "A IS NOT 3"
 GOSUB 600
 ENDIF
 
-### FOR
+### INT
 
-FOR [type] {name} = {start} TO {end} [step operator (defaults to name++)]
+For defining a integer type variable or constant, see [CONST](#const) and [LET](#let), and a function for parsing a string to an integer.
 
-FOR BYTE I = 0 TO 10
+[Variable](#let) or type integer
+
+```basic
+LET INT B
+```
+
+[Constant](#const) of type integer
+
+```basic
+CONST INT CB = 25
+```
+
+A [block scoped variable](#temporary-block-scoped-variables) with type integer
+
+```basic
+FOR INT I = 0 TO 9
 PRINT I
 NEXT
+```
 
-FOR INT I = 0 TO 1000 STEP I += 100
-PRINT I
-NEXT
+The `INT` function can be used to convert a string to an integer.
 
-DIM BYTE BA = [1, 2, 3]
-FOR BYTE B IN BA
-PRINT B
-NEXT
+```basic
+RETURN_INT = INT(STRING_VALUE)
+B = INT("255")
+```
 
-FOR BYTE I IN [1, 2, 3]
-PRINT I
-NEXT
+### LEFT
 
-### BREAK
+L = LEFT(SV, 2)
 
-The BREAK keyword can be used to break out of the current block. It is essentially a GOTO without a line number. It will store the register of end block part of code to jump to and do a GOTO to that position.
+### LEN
 
-REM:DRAW
-PRINT "DRAWING"
-BREAK (this is the same GOTO the line with ENDSUB)
-REM SKIPPED
-ENDSUB
+Get the first byte value from the array. For DIM types (BYTE, INT, QUE) the size is returned. For STR the length is returned.
 
-FOR I IN [1, 2, 3]
-IF I == 2 THEN BREAK (this is the same as a GOTO after the NEXT)
-NEXT
-
-### END
-
-### PRINT
-
-### POKE and PEEK
-
-POKE(57280, 1)
-B = PEEK(57820)
-
-### Array Functions
-
-Get the first byte value from the array. For DIM types (BYTE, INT, QUE) the size is returned. For STRING the length is returned.
-
-LET STRING[10] ST = "HI"
+LET STR[10] ST = "HI"
 
 L = LEN(ST) will return 2
 
-Writing to and reading from memory.
+### LET
 
-WRITE(1024, [1, 2, 3])
+Define a variable with global scope that can be accessed and assigned to at any point in the program (except when overwritten by [block scoped variables](#temporary-block-scoped-variables).)
+A string is handled as an array type in Raptor BASIC. See [STR](#str) for more information.
 
-LET BYTE BA = {1, 2, 3}
-WRITE(1024, BA)
+Define an integer or byte variable.
+Memory: {type}{name x2}{value base on data type} (byte 4, int 5)
+
+```basic
+LET BYTE B
+LET CHAR C (TODO: do we really need another byte with an auto parser)
+LET INT I
+```
+
+Multiple definition of the same type can be defined inline.
+
+```basic
+LET BYTE A, B, C, D, E
+```
+
+Defining with a default value will add that value into memory. TODO: should it be okay to run these lines of code multiple times as we are really only doing an assignment, as the actual definition will be handled AOT?
+Memory: {type}{name x2}{value base on data type}{default value} (byte 5, int 7)
+
+```basic
+LET BYTE B = 255
+LET INT I = 1000
+```
+
+Single characters can be stored and will use a single byte containing the PETSCII value, and printing these variables would output the string representation.
+
+```basic
+LET CHAR C = "C"
+```
+
+#### Temporary Block Scoped Variables
+
+Variables defined with [LET](#let) and [CONST](#const) have global scope and can be accessed anywhere. Temporary variables can also be defined within a block scope, and will only be available in that block. You can see this used in FOR loops and custom functions:
+
+FOR BYTE I = 1 TO 10
+REN I IS ONLY AVAILABLE HERE AND
+REN WILL PREVENT ACCESS TO A GLOBAL I
+NEXT
+
+Custom functions use these as parameters:
+
+DEF FN AR(BYTE X, BYTE Y)
+REN X AND Y ARE ONLY AVAILABLE HERE
+ENDIF
+
+But you can also add them inside the scope:
+
+DEF FN AR(BYTE X, BYTE Y)
+INT Z = X \* Y
+REN X, Y, AND Z ARE ONLY AVAILABLE HERE
+ENDIF
+
+### LINK
+
+### LIST
+
+### PRINT
+
+### PEEK
+
+Returns the value stored in memory.
+
+```basic
+RETURN_VAL_BYTE = PEEK(REGISTER)
+B = PEEK(57820)
+```
+
+### POKE
+
+Set the value in memory.
+
+```basic
+POKE REGISTER_INT, VALUE_BYTE
+POKE 57280, 1
+```
+
+### POP
+
+Returns the bottom value from a [QUE](#que) and updates the bottom index pointer. Unlike [BOT](#bot), this will essentially remove the value returned as it is now beyond the index pointer.
+
+### PULL
+
+Returns the top value from a [QUE](#que) and updates the top index pointer. Unlike [TOP](#top), this will essentially remove the value returned as it is now beyond the index pointer.
+
+### PUSH
+
+Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE.
+
+### QUE
+
+A queue is an array with a top and bottom pointer for tracking items that are added and removed. A negative 1 offset is used for an empty state which requires an extra register in the array to allow for the correct length. If a pointer reaches either end of the index range, they will loop to the other end based on the current action. This allows value to be continuosly added as long as the 2 pointers don't meet. The [PUSH](#push), [PULL](#pull), and [POP](#pop) functions are used to add and remove value based on FIFO or FILO principals. The [TOP](#top) and [BOT](#bot) can be used to return the end values without moving the pointers.
+
+`{type}{name x2}{size x2}{top x2}{bottom x2}{data...}`
+
+Empty state
+| 0 | 1 | 2 | 3 | 4 | 5 |
+| --- | --- | --- | --- | --- | --- |
+| top | | | | | |
+| | | | | | |
+| | bot | | | | |
+
+```basic
+DIM QUE BYTE[5] QB
+REM ADD VALUES
+PUSH(QB, 10)
+PUSH(QB, 20)
+PUSH(QB, 30)
+```
+
+| 0   | 1   | 2   | 3   | 4   | 5   |
+| --- | --- | --- | --- | --- | --- |
+|     |     |     | top |     |     |
+|     | 10  | 20  | 30  |     |     |
+|     | bot |     |     |     |     |
+
+Get the top value of 30
+
+```basic
+B = TOP(QB)
+```
+
+Get the bottom value of 10
+
+```basic
+B = BOT(QB)
+```
+
+Return the bottom value while moving the bottom pointer up.
+
+```basic
+B = POP(QB)
+```
+
+| 0   | 1   | 2   | 3   | 4   | 5   |
+| --- | --- | --- | --- | --- | --- |
+|     |     |     | top |     |     |
+|     | 10  | 20  | 30  |     |     |
+|     |     | bot |     |     |     |
+
+Return the top value while moving the top pointer down.
+
+```basic
+B = PULL(QB)
+```
+
+| 0   | 1   | 2   | 3   | 4   | 5   |
+| --- | --- | --- | --- | --- | --- |
+|     | top |     |     |     |     |
+| 10  | 20  | 30  |     |     |     |
+|     | bot |     |     |     |     |
+
+To allow the queue to work continuously, wne a push occurs with top at the max index, it will be set to 0 and the value added in the first index. Values will constantly loop in this way.
+Pushing a 6th value to a queue with a size of 5 would hit the zero state of a negative 1 offset and all values would be lost. So it's important to use the correct size.
+
+| 0   | 1   | 2   | 3   | 4   | 5   |
+| --- | --- | --- | --- | --- | --- |
+| top |     |     |     |     |     |
+| 60  | 10  | 20  | 30  | 40  | 50  |
+|     | bot |     |     |     |     |
+
+The `QUE` keyword can also be used to get all the current data from bottom to top.
+
+```basic
+PRINT QUE(Q)
+```
+
+### READ
 
 LET BYTE[3] BA
 BA = READ(1024)
 
-WRITE(52244, "HELLO WORLD")
-PRINT(READ(52244))
+WRITE 52244, "HELLO WORLD"
+PRINT READ(52244)
 
-### String Functions
-
-S = SUBSTR(SV, 2, 2)
-
-L = LEFT(SV, 2)
+### RIGHT
 
 R = RIGHT(SV, 2)
 
-### LIST
+### REM
+
+Used for leaving a comment/remark in the program. The interpreter will automatically jump over these lines.
+
+```basic
+REM THIS IS A COMMENT
+```
+
+#### Labels
+
+You can also use `REM` to create a label that can be used to jump to using [GOTO](#goto) and [GOSUB](#gosub). The interpreter will replace the label with the correct pointer to the line after the `REM` line.
+
+```basic
+REM:MAIN
+...
+GOTO :MAIN
+```
 
 ### RUN
 
-## Structure
+### STR
 
-### Zero Page usage
+String are a type of array that require a length to be defined. This is due to how Raptor BASIC stores all data within the program. See [DIM](#dim) for more details. The main difference between a string and array is that the size is split into 2 values, the first byte is the length and the second is the size. This means string are limited to 255 in length. When [LEN](#len) is used it will only return the length data.
 
-#### Input Layout
+`{type}{name x2}{length}{size}{data...}`
 
-#### Run Time Layout
+Define a string by explicit length.
 
-| Register | Use                      |
-| -------- | ------------------------ |
-| $03      | status                   |
-| $04      | current position pointer |
-| $06      | next position pointer    |
-| $08      | return value holder      |
-| $0a      | first parameter holder   |
-| $0c      | second parameter holder  |
-| $0e      | third parameter holder   |
+```basic
+LET STR[10] SV
+```
 
-### Program header
+Define a string with an implicit length and default value.
 
-## Interpreter
+```basic
+LET STR SV = "HELLO"
+```
 
-### Type system
+Define a string with an explicit length and a default value which is less than the length.
 
-#### General
+```basic
+LET STR[10] SV = "HELLO"
+```
 
-| Bit     | Description | Values                                      |
-| ------- | ----------- | ------------------------------------------- |
-| 1       | source      | 0: system 1: user                           |
-| 2 and 3 | data        | 00: byte, 01: int, 10: string, 11: function |
-| 4       | mutable     | 0: static, 1: variable                      |
-| 5       | array       | 0: single, 1: array                         |
-| 6       | value       | 0: value, 1: reference                      |
-| 7 and 8 | options     | func param count/scope level 0 - 3          |
+You can also manipulate the string length by assigning a number value. Assigning a byte will be stored in the length. The string data is not changed, so setting it back will restore the original value.
 
-#### Variables
+```basic
+LET STRING HI = "HELLO"
+HI = 0
+```
 
-| Bit     | Description | Values                                      |
-| ------- | ----------- | ------------------------------------------- |
-| 1       | source      | 1: user                                     |
-| 2 and 3 | data        | 00: byte, 01: int, 10: string, 11: function |
-| 4       | mutable     | 0: static, 1: variable                      |
-| 5       | array       | 0: single, 1: array                         |
-| 6       | value       | 0: value, 1: reference                      |
-| 7 and 8 | options     | scope level 0 - 3                           |
+The `STR` function can be used to convert a number to a string.
 
-#### System Functions
+```basic
+LET STR[4] NM
+NM = STR(1234)
+```
 
-| Bit     | Description | Values                 |
-| ------- | ----------- | ---------------------- |
-| 1       | source      | 0: system              |
-| 2 and 3 | data        | 11: function           |
-| 4       | mutable     | 0: static              |
-| 5       | array       | 0: single              |
-| 6       | value       | 1: reference           |
-| 7 and 8 | options     | func param count 0 - 3 |
+### SUBSTR
 
-### Line entry
+S = SUBSTR(SV, 2, 2)
 
-Nested functions will be written first to anonymous variables which will be referenced as the parent functions parameter.
+### TOP
 
-### AOT line linker
+Returns the top value from a [QUE](#que). Unlike [PULL](#pull) the index is not changed and the value stays at the top.
 
-### AOT variable resolver
+### WRITE
 
-### AOT block scoped variable resolver
+Writing to memory.
 
-Functions and subroutines will push the return register into the hardware stack. The end keywords will pop the register and jump back to the program.
+WRITE(1024, [1, 2, 3])
 
-GOSUB and FN will push the next register into the stack. ENDSUB and ENDFN will pull register and jump.
-Inline FN will do the same thing with a hidden ENDFN keyword at the end of the line.
-
-### Run time processor
+LET BYTE BA = [1, 2, 3]
+WRITE 1024, BA
+WRITE 1024, BA STEP 40
 
 ```
 
