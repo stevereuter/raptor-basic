@@ -20,17 +20,15 @@ Raptor BASIC operates through four distinct processing phases:
 ### Memory Layout Example
 
 **C64 BASIC 2.0 (20 bytes total):** Allocates 13 bytes for code and 7 bytes for the variable, split across separate memory locations.
-`basic
+```basic
     1000 X = 255
-    `
-
-````
+    ```
 
 ***Raptor BASIC *** (6 bytes total): Code and variable data are stored compactly inline.
 
 ```basic
 1000 LET BYTE X = 255
-````
+```
 
 ### Execution Speedups
 
