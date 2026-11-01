@@ -293,11 +293,19 @@ CONST BYTE A = 10, B = 20, C = 20
 
 ### DEF FN
 
+For defining custom functions that return a value from any part of the program. Functions can have up to 3 parameters which work like [block scope variables](#temporary-block-scope-variables) and return a value. Functions can be written 2 ways.
+
+**_Inline functions_** are for simple calculations and address immediately returned.
+
 ```basic
-DEF FN CB(INT A, INT B, INT C) => A*B*C
+DEF FN NAME(PARAM_1, PARAM_2, PARAM_3) => RETURN_OPEEATION
 
 DEF FN RD(BYTE D) => RND(D) + 1
+```
 
+**_Block Functions_** can be any number of lines, must return a value using [RETURN](#RETURN), and must end using [ENDFN](#endfn).
+
+```basic
 DEF FN SC(BYTE X, BYTE Y)
 IF !X THEN RETURN 0
 IF !Y THEN RETURN 0
@@ -307,11 +315,11 @@ ENDFN
 
 #### RETURN
 
-For setting the return value in a user defined function. This will also trigger a jump to the [ENDFN](#endfn) keword at the end of the block.
+For setting the return value in user defined block functions. This will also trigger a jump to the [ENDFN](#endfn) keword at the end of the block.
 
 #### ENDFN
 
-This is used to define the end of a block function.
+For defining the end of a user defined block function.
 
 ### DIM
 
