@@ -520,23 +520,39 @@ LET CHAR C = "C"
 
 Variables defined with [LET](#let) and [CONST](#const) have global scope and can be accessed anywhere. Temporary variables can also be defined within a block scope, and will only be available in that block. You can see this used in FOR loops and custom functions:
 
+```basic
 FOR BYTE I = 1 TO 10
-REN I IS ONLY AVAILABLE HERE AND
-REN WILL PREVENT ACCESS TO A GLOBAL I
+REM I IS ONLY AVAILABLE HERE AND
+REM WILL PREVENT ACCESS TO A GLOBAL I
 NEXT
+```
 
 Custom functions use these as parameters:
 
+```basic
 DEF FN AR(BYTE X, BYTE Y)
 REN X AND Y ARE ONLY AVAILABLE HERE
 ENDIF
+```
 
-But you can also add them inside the scope:
+But you can also add them inside any block. A block is any section of code that has a start and end point:
 
+```basic
 DEF FN AR(BYTE X, BYTE Y)
 INT Z = X \* Y
 REN X, Y, AND Z ARE ONLY AVAILABLE HERE
 ENDIF
+```
+
+Other blocks: 
+
+|Start|End|
+| ----- | -----|
+| FOR| NEXT|
+| IF| ELSE/ENDIF |
+| ELSE | ENDIF |
+| FN | ENDFN |
+| Label/line | ENDSUB |
 
 ### LINK
 
@@ -566,13 +582,28 @@ POKE 57280, 1
 
 Returns the bottom value from a [QUE](#que) and updates the bottom index pointer. Unlike [BOT](#bot), this will essentially remove the value returned as it is now beyond the index pointer.
 
+```basic
+VALUE = POP(QUE_REF)
+V = POP(Q)
+```
+
 ### PULL
 
 Returns the top value from a [QUE](#que) and updates the top index pointer. Unlike [TOP](#top), this will essentially remove the value returned as it is now beyond the index pointer.
 
+```basic
+VALUE = PULL(QUE_REF)
+V = PULL(Q)
+```
+
 ### PUSH
 
 Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE.
+
+```basic
+PUSH QUE_REF, VALUE
+PUSH QUE, 25
+```
 
 ### QUE
 
@@ -654,19 +685,29 @@ PRINT QUE(Q)
 
 ### READ
 
+Returns data from memory into an array. 
+
+```basic
+BYTE_ARR = READ(START_REG, LENGTH)
 LET BYTE[3] BA
-BA = READ(1024)
+BA = READ(1024, 3)
 
 WRITE 52244, "HELLO WORLD"
-PRINT READ(52244)
+PRINT READ(52244, 11)
+```
 
 ### RIGHT
 
+Returns the left pay off a string up to X length.
+
+```basic
+RETURN_STR = RIGHT(STR_REF, LENGTH)
 R = RIGHT(SV, 2)
+```
 
 ### REM
 
-Used for leaving a comment/remark in the program. The interpreter will automatically jump over these lines.
+Used for leaving a comment (remark) in the program. The interpreter will automatically jump over these lines by creating a hidden `GOTO` to the next line number.
 
 ```basic
 REM THIS IS A COMMENT
@@ -682,7 +723,18 @@ REM:MAIN
 GOTO :MAIN
 ```
 
+### RPTSTR
+
+Returns a string of repeated characters X number of times.
+
+```basic
+RETURN_STR = RPTSTR(CHAR, COUNT)
+S = RPTSTR("*", 10)
+```
+
 ### RUN
+
+Starts the program execution. This will first run [LINK](#link) if the program status is dirty, then runs the program.
 
 ### STR
 
@@ -724,22 +776,37 @@ NM = STR(1234)
 
 ### SUBSTR
 
+Returns party of a string. 
+```basic
+RETURN_STR = SUBSTR(STR_REF, START_POS, LENGTH)
 S = SUBSTR(SV, 2, 2)
+```
 
 ### TOP
 
 Returns the top value from a [QUE](#que). Unlike [PULL](#pull) the index is not changed and the value stays at the top.
 
-### WRITE
-
-Writing to memory.
-
-WRITE(1024, [1, 2, 3])
-
-LET BYTE BA = [1, 2, 3]
-WRITE 1024, BA
-WRITE 1024, BA STEP 40
-
+```basic
+VALUE = TOP(QUE_REF)
+V = TOP(Q)
 ```
 
+### WRITE
+
+Write the elements of an array to memory.
+
+Write from static array.
+```basic
+WRITE(1024, [1, 2, 3])
+```
+
+Write from array variable. 
+```basic
+LET BYTE BA = [1, 2, 3]
+WRITE 1024, BA
+```
+
+Write to non consecutive registers by step interval. 
+```basic
+WRITE 1024, BA STEP 40
 ```
