@@ -20,11 +20,12 @@ Raptor BASIC operates through four distinct processing phases:
 ### Memory Layout Example
 
 **C64 BASIC 2.0 (20 bytes total):** Allocates 13 bytes for code and 7 bytes for the variable, split across separate memory locations.
+
 ```basic
 1000 X = 255
 ```
 
-***Raptor BASIC *** (6 bytes total): Code and variable data are stored compactly inline.
+**_Raptor BASIC _** (6 bytes total): Code and variable data are stored compactly inline.
 
 ```basic
 1000 LET BYTE X = 255
@@ -266,7 +267,7 @@ LET BYTE B
 CONST BYTE CB = 25
 ```
 
-A [block scoped variable](#temporary-block-scoped-variables) with type byte
+A [block scoped variable](#block-scoped-variables) with type byte
 
 ```basic
 FOR BYTE I = 0 TO 9
@@ -293,20 +294,20 @@ CONST BYTE A = 10, B = 20, C = 20
 
 ### DEF FN
 
-For defining custom functions that return a value from any part of the program. Functions can have up to 3 parameters which work like [block scope variables](#temporary-block-scope-variables) and return a value. Functions can be written 2 ways.
+For defining custom functions that return a value from any part of the program. Functions use 3 character names, can have 1 to 3 parameters which work like [block scope variables](#temporary-block-scope-variables), and return a value. Functions can be written 2 ways.
 
 **_Inline functions_** are for simple calculations and address immediately returned.
 
 ```basic
 DEF FN NAME(PARAM_1, PARAM_2, PARAM_3) => RETURN_OPEEATION
 
-DEF FN RD(BYTE D) => RND(D) + 1
+DEF FN RLL(BYTE D) => RND(D) + 1
 ```
 
 **_Block Functions_** can be any number of lines, must return a value using [RETURN](#RETURN), and must end using [ENDFN](#endfn).
 
 ```basic
-DEF FN SC(BYTE X, BYTE Y)
+DEF FN SUP(BYTE X, BYTE Y)
 IF !X THEN RETURN 0
 IF !Y THEN RETURN 0
 RETURN X\*Y
@@ -353,7 +354,7 @@ For creating a loop based on a range or array.
 
 #### FOR TO
 
-Loop through a number range from a specified starting point, end point, and increment step. A block scoped variable is use to hold the index value. See [block scoped variables](#temporary-block-scoped-variables) for more details.
+Loop through a number range from a specified starting point, end point, and increment step. A block scoped variable is use to hold the index value. See [block scoped variables](#block-scoped-variables) for more details.
 
 Default single step increment
 
@@ -383,7 +384,7 @@ NEXT
 
 #### FOR IN
 
-Loop through an array. A block scoped variable is use to hold the value of the current array element. See [block scoped variables](#temporary-block-scoped-variables) for more details.
+Loop through an array. A block scoped variable is use to hold the value of the current array element. See [block scoped variables](#block-scoped-variables) for more details.
 
 Use an array reference.
 
@@ -415,25 +416,48 @@ GOTO :MAIN
 
 ### GOSUB
 
-Used to jump to a user defined [subroutine](#subroutine), and return when complete. A line number, variable, or [label](#labels) can be used for the target.
+Used to jump to a user defined [SUB](#sub), and return when complete. A line number, variable, or [label](#labels) can be used for the target.
 
+```basic
 GOSUB 500
 GOSUB DW
-GOSUB :DRAW
+GOSUB :DRW
+```
 
-#### Subroutine
+#### SUB
 
-User defined subroutine definition. A subroutine is any block of code that ends with `ENDSUB`. This keyword is used to return to `GOSUB` command that called it. These should only be reached via a `GOSUB` due to how the [Stack](#system-stack) is used.
+User defined subroutine definition. A subroutine is any block of code that starts with `SUB` ends with [ENDSUB](#endsub). Which is used to return to the [GOSUB](#gosub) command that called it. A `SUB` can be called by name which must be 3 characters or by line number. These should only be reached via a `GOSUB` due to how the [Stack](#system-stack) is used.
 
 #### ENDSUB
 
 Defines the end of a user subroutine. This is a trigger that will return the program to the code that called the subroutine.
 
+```basic
+GOSUB :BDR
+...
+SUB BDR
+POKE 53281, 0
+ENDSUB
+```
+
 ### IF
+
+Used to conditionally execute code. The `IF` code will be executed when the condition evaluates to a truthy value, and an `ELSE` can be used to execute values of a falsy value. There are 2 ways to write an `IF` statement.
+
+**_Inline IF Statements_** are writton on a single line and can be used to either execute code or jump to a line.
+
+Using if to jump to lines of code.
+
+```basic
+IF CONDITION_TRUTHY THEN GOTO_LINE [ELSE GOTO_LINE]
 
 IF A THEN 200
 IF A THEN 200 ELSE 300
+```
 
+**_Block IF Statements_** are written across multiple lines using block scope.
+
+```basic
 IF A == 3
 PRINT "A IS 3"
 GOSUB 500
@@ -446,6 +470,7 @@ ELSE
 PRINT "A IS NOT 3"
 GOSUB 600
 ENDIF
+```
 
 ### INT
 
@@ -463,7 +488,7 @@ LET INT B
 CONST INT CB = 25
 ```
 
-A [block scoped variable](#temporary-block-scoped-variables) with type integer
+A [block scoped variable](#block-scoped-variables) with type integer
 
 ```basic
 FOR INT I = 0 TO 9
@@ -478,21 +503,45 @@ RETURN_INT = INT(STRING_VALUE)
 B = INT("255")
 ```
 
+### Labels
+
+You can create a label that can be used to jump to using [GOTO](#goto) and [GOSUB](#gosub) instead of using the line number. The interpreter will replace the label with the correct pointer to the line. Labels must be 3 characters
+
+```basic
+:MLP
+...
+GOTO :MLP
+```
+
 ### LEFT
 
+Returns the left part of a string of X length.
+
+```basic
+RETURN_STR = LEFT(STR_VAL, LENGTH)
+
 L = LEFT(SV, 2)
+```
 
 ### LEN
 
-Get the first byte value from the array. For DIM types (BYTE, INT, QUE) the size is returned. For STR the length is returned.
+Returns the length byte value from an array. For [DIM](#dim) type arrays ([BYTE](#byte), [INT](#int), [QUE](#que)) the size of the array is returned. For [STR](#str) the length is returned.
+
+```basic
+RETURN_VAL = LEN(ARRAY)
 
 LET STR[10] ST = "HI"
+REM RETURNS 2
+L = LEN(ST)
 
-L = LEN(ST) will return 2
+LET BYTE[10] BT
+REM RETURNS 10
+L = LEN(BT)
+```
 
 ### LET
 
-Define a variable with global scope that can be accessed and assigned to at any point in the program (except when overwritten by [block scoped variables](#temporary-block-scoped-variables).)
+Define a variable with global scope that can be accessed and assigned to at any point in the program (except when overwritten by [block scoped variables](#block-scoped-variables).)
 A string is handled as an array type in Raptor BASIC. See [STR](#str) for more information.
 
 Define an integer or byte variable.
@@ -524,9 +573,11 @@ Single characters can be stored and will use a single byte containing the PETSCI
 LET CHAR C = "C"
 ```
 
-#### Temporary Block Scoped Variables
+#### Block Scoped Variables
 
-Variables defined with [LET](#let) and [CONST](#const) have global scope and can be accessed anywhere. Temporary variables can also be defined within a block scope, and will only be available in that block. You can see this used in FOR loops and custom functions:
+Variables defined with [LET](#let) and [CONST](#const) have global scope and can be accessed anywhere. Block scoped variables can only be defined within a block scope, will only be available in that block, and will prevent access to any global variables with the same name within that block.
+
+`FOR` loops use these for the index variable, `I` below:
 
 ```basic
 FOR BYTE I = 1 TO 10
@@ -535,32 +586,36 @@ REM WILL PREVENT ACCESS TO A GLOBAL I
 NEXT
 ```
 
-Custom functions use these as parameters:
+Custom functions use these as parameters, `X` and `Y` below:
 
 ```basic
-DEF FN AR(BYTE X, BYTE Y)
+DEF FN ARA(BYTE X, BYTE Y)
 REN X AND Y ARE ONLY AVAILABLE HERE
 ENDIF
 ```
 
-But you can also add them inside any block. A block is any section of code that has a start and end point:
+But you can also add them inside any block:
 
 ```basic
-DEF FN AR(BYTE X, BYTE Y)
-INT Z = X \* Y
-REN X, Y, AND Z ARE ONLY AVAILABLE HERE
-ENDIF
+REM THESE VARIABLES ARE NOT AVAILABLE IN THE BLOCK BELOW DUE TO HAVING THE SAME NAMES
+LET INT X, Y, Z
+REM BLOCK START
+DEF FN ARA(BYTE X, BYTE Y)
+INT Z = X * Y
+RETURN Z
+REM BLOCK END
+ENDFN
 ```
 
-Other blocks: 
+A block of code is code that has a specific start and end point that is only reached via a condition. See the table below for all blacks:
 
-|Start|End|
-| ----- | -----|
-| FOR| NEXT|
-| IF| ELSE/ENDIF |
-| ELSE | ENDIF |
-| FN | ENDFN |
-| Label/line | ENDSUB |
+| Start         | End                              |
+| ------------- | -------------------------------- |
+| [FOR](#for)   | [NEXT](#next)                    |
+| [IF](#if)     | [ELSE](#else) or [ENDIF](#endif) |
+| [ELSE](#else) | [ENDIF](#endif)                  |
+| [FN](#def-fn) | [ENDFN](#endfn)                  |
+| [SUB](#sub)   | [ENDSUB](#endsub)                |
 
 ### LINK
 
@@ -693,7 +748,7 @@ PRINT QUE(Q)
 
 ### READ
 
-Returns data from memory into an array. 
+Returns data from memory into an array.
 
 ```basic
 BYTE_ARR = READ(START_REG, LENGTH)
@@ -721,15 +776,7 @@ Used for leaving a comment (remark) in the program. The interpreter will automat
 REM THIS IS A COMMENT
 ```
 
-#### Labels
-
-You can also use `REM` to create a label that can be used to jump to using [GOTO](#goto) and [GOSUB](#gosub). The interpreter will replace the label with the correct pointer to the line after the `REM` line.
-
-```basic
-REM:MAIN
-...
-GOTO :MAIN
-```
+### RND
 
 ### RPTSTR
 
@@ -784,7 +831,8 @@ NM = STR(1234)
 
 ### SUBSTR
 
-Returns party of a string. 
+Returns party of a string.
+
 ```basic
 RETURN_STR = SUBSTR(STR_REF, START_POS, LENGTH)
 S = SUBSTR(SV, 2, 2)
@@ -804,17 +852,20 @@ V = TOP(Q)
 Write the elements of an array to memory.
 
 Write from static array.
+
 ```basic
 WRITE(1024, [1, 2, 3])
 ```
 
-Write from array variable. 
+Write from array variable.
+
 ```basic
 LET BYTE BA = [1, 2, 3]
 WRITE 1024, BA
 ```
 
-Write to non consecutive registers by step interval. 
+Write to non consecutive registers by step interval.
+
 ```basic
 WRITE 1024, BA STEP 40
 ```
