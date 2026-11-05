@@ -505,12 +505,12 @@ B = INT("255")
 
 ### Labels
 
-You can create a label that can be used to jump to using [GOTO](#goto) and [GOSUB](#gosub) instead of using the line number. The interpreter will replace the label with the correct pointer to the line. Labels must be 3 characters
+You can create a label that can be used to jump to using [GOTO](#goto) and [GOSUB](#gosub) instead of using the line number. The interpreter will replace the label with the correct pointer to the line. Labels must be 3-4 characters
 
 ```basic
-:MLP
+MAIN:
 ...
-GOTO :MLP
+GOTO MAIN
 ```
 
 ### LEFT
@@ -541,7 +541,7 @@ L = LEN(BT)
 
 ### LET
 
-Define a variable with global scope that can be accessed and assigned to at any point in the program (except when overwritten by [block scoped variables](#block-scoped-variables).)
+Define a variable with global scope that can be accessed and assigned to at any point in the program (except when overwritten by [block scoped variables](#block-scoped-variables).) Variables must use 1-2 character names.
 A string is handled as an array type in Raptor BASIC. See [STR](#str) for more information.
 
 Define an integer or byte variable.
@@ -575,7 +575,7 @@ LET CHAR C = "C"
 
 #### Block Scoped Variables
 
-Variables defined with [LET](#let) and [CONST](#const) have global scope and can be accessed anywhere. Block scoped variables can only be defined within a block scope, will only be available in that block, and will prevent access to any global variables with the same name within that block.
+Variables defined with [LET](#let) and [CONST](#const) have global scope and can be accessed anywhere. Block scoped variables can only be defined within a block scope, will only be available in that block, and will prevent access to any global variables with the same name within that block. Block Scoped variables must use a single character name.
 
 `FOR` loops use these for the index variable, `I` below:
 
