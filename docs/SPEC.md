@@ -40,19 +40,22 @@ Raptor BASIC operates through four distinct processing phases:
 
 ### Zero Page usage
 
+- **Entry:** Holds input stream and parsed byte code line
+- **Linker:** Holds pointer references
+- **Runtime:** Holds status and function values
+- **List:** Holds byte code line and parsed readable line
+
 #### Input Layout
 
 #### Run Time Layout
 
-| Register | Use                            |
-| -------- | ------------------------------ |
-| $03      | status                         |
-| $04      | current position pointer (TBD) |
-| $06      | next position pointer (TBD)    |
-| $08      | return value holder            |
-| $0a      | first parameter holder         |
-| $0c      | second parameter holder        |
-| $0e      | third parameter holder         |
+| Register | Use                     |
+| -------- | ----------------------- |
+| $03      | status                  |
+| $04      | return value holder     |
+| $06      | first parameter holder  |
+| $08      | second parameter holder |
+| $0a      | third parameter holder  |
 
 ### Program header
 
