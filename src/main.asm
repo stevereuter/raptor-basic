@@ -17,16 +17,13 @@ main
     ; set the parameter value
     lda #5
     sta RT_PARAM_1
-    lda #5
+    lda #6
     sta RT_PARAM_2
     
     ; simulate increment function
-    jsr not_equal_byte
+    jsr lt_byte
 
 rts
-
-; shared subroutines
-!src "src/primitives/limit.asm"
 
 ; core subroutines
 !src "src/primitives/assign.asm"

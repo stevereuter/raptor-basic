@@ -3,10 +3,15 @@ inc_byte:
     lda RT_PARAM_1
     clc
     adc #1
-    bcs return_max_byte
+    bcs +
+    ; happy path
     sta (RT_RTN_REF),y
     rts
-
++
+    ; overflow limit
+    lda #$ff
+    sta (RT_RTN_REF),y
+    rts
 ; single int increment
 
 ; single byte decrement
@@ -14,7 +19,13 @@ dec_byte:
     lda RT_PARAM_1
     sec
     sbc #1
-    bcc return_min_byte
+    bcc +
+    ; happy path
+    sta (RT_RTN_REF),y
+    rts
++
+    ; overflow limit
+    lda #0
     sta (RT_RTN_REF),y
     rts
 
@@ -25,10 +36,15 @@ add_byte:
     lda RT_PARAM_1
     clc
     adc RT_PARAM_2
-    bcs return_max_byte
+    bcs +
+    ; happy path
     sta (RT_RTN_REF),y
     rts
-
++
+    ; overflow limit
+    lda #$ff
+    sta (RT_RTN_REF),y
+    rts
 ; add int
 
 ; subtract byte
@@ -36,7 +52,13 @@ sub_byte:
     lda RT_PARAM_1
     sec
     sbc RT_PARAM_2
-    bcc return_min_byte
+    bcc +
+    ; happy path
+    sta (RT_RTN_REF),y
+    rts
++
+    ; overflow limit
+    lda #0
     sta (RT_RTN_REF),y
     rts
 
