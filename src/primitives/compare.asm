@@ -17,17 +17,15 @@ equal_byte:
 
 ; not byte
 not_byte:
-    lda RT_PARAM_1
-    cmp #0
-    bne +
-    ; true path
-    lda #$ff
-    sta (RT_RTN_REF),y
+    lda RT_PARAM_1      ; get value
+    bne +               ; jump if falsy
+
+    lda #$ff            ; true path
+    sta (RT_RTN_REF),y  ; return true
     rts
 +
-    ; false path
-    lda #0
-    sta (RT_RTN_REF),y
+    lda #0              ; false path
+    sta (RT_RTN_REF),y  ; return valse
     rts
 
 ; not int

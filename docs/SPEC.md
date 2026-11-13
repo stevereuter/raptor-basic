@@ -38,6 +38,15 @@ Raptor BASIC operates through four distinct processing phases:
 
 ## Program Structure
 
+As the program is interpreted AOT, not all lines will be processed at run-time. Due to this the code should be split into distinct parts to prevent reading unnecessary code. All variable definitions, functions, and subroutines should be grouped individually, and the main program code on its own.
+
+- variables
+- functions
+- subroutines
+- program
+
+They do not need to be in this order, but if the program is not last it will require the [END](#end) keyword to signal a stop.
+
 ### Zero Page usage
 
 - **Entry:** Holds input stream and parsed byte code line
@@ -243,7 +252,7 @@ TODO: this is not really needed as GOTO can be used to achieve the same goal, th
 The `BREAK` keyword can be used to break out of the current block. It is essentially a `GOTO` without a line number. It will store the register of end block part of code to jump to and do a `GOTO` to that position.
 
 ```basic
-REM:DRAW
+SUB DRAW
 PRINT "DRAWING"
 BREAK (this is the same GOTO the line with ENDSUB)
 REM SKIPPED
@@ -409,22 +418,20 @@ NEXT
 
 ### GOTO
 
-Used to jump to a different line in the program. A line number, variable, or [label](#labels) can be used for the target.
+Used to jump to a different line in the program. A line number or [label](#labels) can be used for the target.
 
 ```basic
 GOTO 10
-GOTO ST
-GOTO :MAIN
+GOTO MAIN
 ```
 
 ### GOSUB
 
-Used to jump to a user defined [SUB](#sub), and return when complete. A line number, variable, or [label](#labels) can be used for the target.
+Used to jump to a user defined [SUB](#sub), and return when complete. A line number or [label](#labels) can be used for the target.
 
 ```basic
 GOSUB 500
-GOSUB DW
-GOSUB :DRW
+GOSUB DRAW
 ```
 
 #### SUB
@@ -436,9 +443,9 @@ User defined subroutine definition. A subroutine is any block of code that start
 Defines the end of a user subroutine. This is a trigger that will return the program to the code that called the subroutine.
 
 ```basic
-GOSUB :BDR
+GOSUB BRDR
 ...
-SUB BDR
+SUB BRDR
 POKE 53281, 0
 ENDSUB
 ```
@@ -622,9 +629,35 @@ A block of code is code that has a specific start and end point that is only rea
 
 ### LINK
 
+AOT interpreter pre-run variable and line linking. Can be run independently so that the program can be saved in a ready state.
+
 ### LIST
 
+For listing the program lines in the readable form.
+
+### ON
+
+Used to jump to a line or subroutine based on a variable index value. The value relates to the index of the parameter. Index 1 would jump to the first parameter, 2 to the second, and so on. Indexes out of range will be ignored.
+
+#### ON GOTO
+
+```basic
+ON VALUE GOTO ...LINE
+
+ON X GOTO 10, 20, 30
+```
+
+#### ON GOSUB
+
+```basic
+ON VALUE GOSUB ...LINE
+
+ON X GOSUB 10, 20, 30
+```
+
 ### PRINT
+
+For printing text to the screen.
 
 ### PEEK
 

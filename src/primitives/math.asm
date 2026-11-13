@@ -1,6 +1,6 @@
 ; single byte increment
 inc_byte:
-    lda RT_PARAM_1
+    lda (RT_RTN_REF),y
     clc
     adc #1
     bcs +
@@ -16,7 +16,7 @@ inc_byte:
 
 ; single byte decrement
 dec_byte:
-    lda RT_PARAM_1
+    lda (RT_RTN_REF),y
     sec
     sbc #1
     bcc +
@@ -33,9 +33,9 @@ dec_byte:
 
 ; add byte
 add_byte:
-    lda RT_PARAM_1
+    lda (RT_RTN_REF),y
     clc
-    adc RT_PARAM_2
+    adc RT_PARAM_1
     bcs +
     ; happy path
     sta (RT_RTN_REF),y
@@ -49,9 +49,9 @@ add_byte:
 
 ; subtract byte
 sub_byte:
-    lda RT_PARAM_1
+    lda (RT_RTN_REF),y
     sec
-    sbc RT_PARAM_2
+    sbc RT_PARAM_1
     bcc +
     ; happy path
     sta (RT_RTN_REF),y

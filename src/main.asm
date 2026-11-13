@@ -8,24 +8,24 @@ jmp main
 
 main
     ; simulate setup
-    ; set the return pointer
-    ldy #0
-    lda #0
+    lda #0              ; return reg
     sta RT_RTN_REF
-    lda #04
+    lda #4
     sta RT_RTN_REF + 1
-    ; set the parameter value
-    lda #5
-    sta RT_PARAM_1
-    lda #6
-    sta RT_PARAM_2
-    
-    ; simulate increment function
-    jsr lt_byte
 
-rts
+    lda #31              ; comparison
+    sta RT_PARAM_1
+
+    ; lda #31             ; truthy value
+    ; sta RT_PARAM_2
+
+    ; lda #0             ; falsy value
+    ; sta RT_PARAM_3
+
+    jsr print_byte
 
 ; core subroutines
 !src "src/primitives/assign.asm"
 !src "src/primitives/math.asm"
 !src "src/primitives/compare.asm"
+!src "src/subroutines/print.asm"
