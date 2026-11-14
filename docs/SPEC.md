@@ -65,6 +65,7 @@ They do not need to be in this order, but if the program is not last it will req
 | $06      | first parameter holder  |
 | $08      | second parameter holder |
 | $0a      | third parameter holder  |
+| $0c.     | temporary storage |
 
 ### Program header
 
