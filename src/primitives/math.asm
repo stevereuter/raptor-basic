@@ -11,6 +11,31 @@ inc_byte:
     rts
 
 ; -------------------------- single int increment
+inc_int:
+    lda (RT_RTN_REF),y      ; load the target low byte
+    clc
+    adc #1
+    sta (RT_RTN_REF),y      ; write the low byte
+    
+    bcc .inc_int_end        ; no carry, jump to the end as we don't need to update the high byte
+    
+    ldy #1
+    lda (RT_RTN_REF),y      ; load the target high byte
+    clc
+    adc #1
+
+    bcc +                   ; no carry, jump to the end
+
+    lda #$ff                ; if we're here, the value overflowed, set it to the max $FFFF
+    sta (RT_RTN_REF),y      ; high byte
+    ldy #0
+    sta (RT_RTN_REF),y      ; low byte
+    rts
++
+    sta (RT_RTN_REF),y      ; high byte happy path
+    ldy #0
+.inc_int_end:
+    rts
 
 ; -------------------------- single byte decrement
 dec_byte:

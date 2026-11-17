@@ -13,17 +13,20 @@ main
     lda #4
     sta RT_RTN_REF + 1
 
-    lda #31              ; comparison
-    sta RT_PARAM_1
+    ldy #0
+    lda #$FF
+    sta (RT_RTN_REF),y
 
-    ; lda #31             ; truthy value
-    ; sta RT_PARAM_2
+    ldy #1
+    lda #$FF          
+    sta (RT_RTN_REF),y
 
     ; lda #0             ; falsy value
     ; sta RT_PARAM_3
 
-    jsr print_byte
-
+    ldy #0
+    jsr inc_int
+    rts
 ; core subroutines
 !src "src/primitives/assign.asm"
 !src "src/primitives/math.asm"
