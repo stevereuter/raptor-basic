@@ -1,65 +1,60 @@
-; single byte increment
+; -------------------------- single byte increment
 inc_byte:
-    lda (RT_RTN_REF),y
+    lda (RT_RTN_REF),y      ; load the target value
     clc
     adc #1
-    bcs +
-    ; happy path
-    sta (RT_RTN_REF),y
-    rts
+    bcc +                   ; jump to write if valid
+    
+    lda #$ff                ; if we're here, the value overflowed, set it to the max
 +
-    ; overflow limit
-    lda #$ff
-    sta (RT_RTN_REF),y
+    sta (RT_RTN_REF),y      ; write the value to the variable
     rts
-; single int increment
 
-; single byte decrement
+; -------------------------- single int increment
+
+; -------------------------- single byte decrement
 dec_byte:
     lda (RT_RTN_REF),y
     sec
     sbc #1
-    bcc +
-    ; happy path
-    sta (RT_RTN_REF),y
+    bcc +                   ; branch if overflow
+    
+    sta (RT_RTN_REF),y      ; happy path
     rts
 +
-    ; overflow limit
-    lda #0
+    lda #0                  ; overflow limit, return min
     sta (RT_RTN_REF),y
     rts
 
-; single int increment
+; -------------------------- single int increment
 
-; add byte
+; -------------------------- add byte
 add_byte:
     lda (RT_RTN_REF),y
     clc
     adc RT_PARAM_1
-    bcs +
-    ; happy path
-    sta (RT_RTN_REF),y
+    bcs +                   ; branch if overflow
+    
+    sta (RT_RTN_REF),y      ; happy path
     rts
 +
-    ; overflow limit
-    lda #$ff
+    lda #$ff                ; overflow limit, return max
     sta (RT_RTN_REF),y
     rts
-; add int
+; -------------------------- add int
 
-; subtract byte
+; -------------------------- subtract byte
 sub_byte:
     lda (RT_RTN_REF),y
     sec
     sbc RT_PARAM_1
-    bcc +
-    ; happy path
-    sta (RT_RTN_REF),y
+    bcc +                   ; branch on overflow
+    
+    sta (RT_RTN_REF),y      ; happy path
     rts
 +
-    ; overflow limit
-    lda #0
+    lda #0                  ; overflow limit, return min
     sta (RT_RTN_REF),y
     rts
 
-; subtract int
+; -------------------------- subtract int

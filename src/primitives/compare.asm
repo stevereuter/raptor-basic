@@ -1,108 +1,102 @@
-; equal byte
+; -------------------------- compares if 2 byte values are equal
 equal_byte:
     lda RT_PARAM_1
     cmp RT_PARAM_2
-    bne +
-    ; true path
-    lda #$ff
+    bne +                  ; branch if not equal
+
+    lda #$ff               ; return true
     sta (RT_RTN_REF),y
     rts
 +
-    ; false path
-    lda #0
+    lda #0                 ; return false
     sta (RT_RTN_REF),y
     rts
 
-; equal int
+; -------------------------- compares if 2 integer values are equal
 
-; not byte
+; -------------------------- compares if byte value is falsy
 not_byte:
-    lda RT_PARAM_1      ; get value
-    bne +               ; jump if falsy
+    lda RT_PARAM_1         ; get value
+    bne +                  ; branch if truthy
 
-    lda #$ff            ; true path
-    sta (RT_RTN_REF),y  ; return true
+    lda #$ff               ; true path, value is zero
+    sta (RT_RTN_REF),y
     rts
 +
-    lda #0              ; false path
-    sta (RT_RTN_REF),y  ; return valse
+    lda #0                 ; false path, value is not zero
+    sta (RT_RTN_REF),y
     rts
 
-; not int
+; -------------------------- compares if integer value is falsy
 
-; not equal byte
+; -------------------------- compares if 2 byte values are not equal
 not_equal_byte:
     lda RT_PARAM_1
     cmp RT_PARAM_2
-    beq +
-    ; true path
-    lda #$ff
+    beq +                  ; branch if not equal
+
+    lda #$ff               ; return true
     sta (RT_RTN_REF),y
     rts
 +
-    ; false path
-    lda #0
+    lda #0                 ; return false
     sta (RT_RTN_REF),y
     rts
 
-; not equal int
+; -------------------------- compares if 2 integer values are not equal
 
-; greater than or equal to
+; -------------------------- compares if param 2 is greater than or equal param 1
 gt_equal_byte:
     lda RT_PARAM_1
     cmp RT_PARAM_2
-    bcs +
-    ; false path
-    lda #0
+    bcs +                  ; branch if true
+
+    lda #0                 ; return false
     sta (RT_RTN_REF),y
     rts
 +
-    ; true path
-    lda #$ff
+    lda #$ff               ; return true
     sta (RT_RTN_REF),y
     rts
 
-; less than or equal to
+; -------------------------- compares if param 2 is less than or equal param 1
 lt_equal_byte:
     lda RT_PARAM_2
     cmp RT_PARAM_1
-    bcs +
-    ; false path
-    lda #0
+    bcs +                  ; branch if true
+
+    lda #0                 ; return false
     sta (RT_RTN_REF),y
     rts
 +
-    ; true path
-    lda #$ff
+    lda #$ff               ; return true
     sta (RT_RTN_REF),y
     rts
 
-; greater than
+; -------------------------- compares if param 2 is greater than param 1
 gt_byte:
     lda RT_PARAM_2
     cmp RT_PARAM_1
-    bcc +    ; branch on less than
-    ; false path
-    lda #0
+    bcc +                  ; branch if true
+
+    lda #0                 ; return false
     sta (RT_RTN_REF),y
     rts
 +
-    ; true path
-    lda #$ff
+    lda #$ff               ; return true
     sta (RT_RTN_REF),y
     rts
 
-; less than
+; -------------------------- compares if param 2 is less than param 1
 lt_byte:
     lda RT_PARAM_1
     cmp RT_PARAM_2
-    bcc +
-    ; false path
-    lda #0
+    bcc +                  ; branch if less than
+
+    lda #0                 ; return false
     sta (RT_RTN_REF),y
     rts
 +
-    ; true path
-    lda #$ff
+    lda #$ff               ; return true
     sta (RT_RTN_REF),y
     rts

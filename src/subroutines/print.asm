@@ -1,12 +1,10 @@
-CHROUT = $ffd2
+CHROUT = $ffd2              ; KERNEL CHROUT register
 
-; print strings
+; -------------------------- prints the contents of a string, PETSCII array
 print_string:
-    ; var ref: type, length, size, ...data (x size)
-    ; load the string ref from param 1, this would be the type
-    ldy #1                  ; offset to get the string length, ref + 1
-    lda (RT_PARAM_1),y      ; get the string length
-    beq .print_done                   ; quit if length is zero
+    lda (RT_PARAM_1),y      ; get the string length, first variable reference byte
+    beq .print_done         ; quit if length is zero
+
     tax                     ; move the length to x for the loop
     ldy #3                  ; move to the data register, ref + 3
 
@@ -18,12 +16,11 @@ print_string:
     bne .print_loop         ; Loop until X reaches 0
 
 .print_done:
-    ldy #0
+    ldy #0                  ; reset y register
     rts
 
-
-; print numbers
+; -------------------------- prints a single byte, PETSCII
 print_byte:
-    lda RT_PARAM_1
-    jsr CHROUT
+    lda RT_PARAM_1          ; expects a byte value to be passed
+    jsr CHROUT              ; Call KERNEL CHROUT
     rts
