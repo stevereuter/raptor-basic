@@ -9,16 +9,16 @@ jmp main
 main
     ; simulate setup
     ; target
-    lda #0            ; low byte
-    sta RT_RTN_REF
-    lda #4            ; high byte
-    sta RT_RTN_REF + 1
+    ; lda #0            ; low byte
+    ; sta RT_RTN_REF
+    ; lda #4            ; high byte
+    ; sta RT_RTN_REF + 1
 
-    lda #0
+    lda #205
     sta RT_PARAM_1
-    sta RT_PARAM_1 + 1
+    ; sta RT_PARAM_1 + 1
 
-    jsr not_int
+    jsr print_byte
 
 rts
 ; core subroutines
