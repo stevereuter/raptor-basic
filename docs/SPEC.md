@@ -886,13 +886,18 @@ V = TOP(Q)
 
 ### WRITE
 
-Write the elements of an array to memory.
-
-Write from static array.
+Write data to multiple memory registers. This is a companion to [POKE](#poke) which writes a single byte.
 
 ```basic
-WRITE(1024, [1, 2, 3])
+WRITE TARGET, DATA [STEP OFFSET = 1]
 ```
+
+Write from static array to consecutive registers.
+
+```basic
+WRITE 1024, [1, 2, 3]
+```
+This would write ABC at the beginning of the screen.
 
 Write from array variable.
 
@@ -905,4 +910,11 @@ Write to non consecutive registers by step interval.
 
 ```basic
 WRITE 1024, BA STEP 40
+```
+This would write vertically on the screen.
+
+You can also write from an int value instead of an array to allow a simplified way to update registers that are designed to hold int values (such as SID frequency and pulse width.)
+
+```basic
+WRITE $D400, 12000
 ```
