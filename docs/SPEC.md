@@ -65,7 +65,7 @@ They do not need to be in this order, but if the program is not last it will req
 | $06      | first parameter holder  |
 | $08      | second parameter holder |
 | $0a      | third parameter holder  |
-| $0c.     | temporary storage |
+| $0c.     | temporary storage       |
 
 ### Program header
 
@@ -266,7 +266,14 @@ NEXT
 
 ### BYTE
 
-For defining a byte type variable or constant, see [CONST](#const) and [LET](#let), and a function for parsing a string to a byte.
+The `BYTE` function can be used to convert a string to a byte
+
+```basic
+RETURN_BYTE = BYTE(STRING_VALUE)
+B = BYTE("255")
+```
+
+Also used as a type definition when defining a byte variable or constant, see [CONST](#const) and [LET](#let), and a function for parsing a string to a byte.
 
 [Variable](#let) or type byte
 
@@ -286,13 +293,6 @@ A [block scoped variable](#block-scoped-variables) with type byte
 FOR BYTE I = 0 TO 9
 PRINT I
 NEXT
-```
-
-The `BYTE` function can be used to convert a string to a byte
-
-```basic
-RETURN_BYTE = BYTE(STRING_VALUE)
-B = BYTE("255")
 ```
 
 ### CONST
@@ -417,6 +417,10 @@ PRINT I
 NEXT
 ```
 
+### GET
+
+Get key press from buffer
+
 ### GOTO
 
 Used to jump to a different line in the program. A line number or [label](#labels) can be used for the target.
@@ -483,9 +487,20 @@ GOSUB 600
 ENDIF
 ```
 
+### INPUT
+
+For getting input from the user
+
 ### INT
 
-For defining a integer type variable or constant, see [CONST](#const) and [LET](#let), and a function for parsing a string to an integer.
+The `INT` function can be used to convert a string to an integer.
+
+```basic
+RETURN_INT = INT(STRING_VALUE)
+B = INT("255")
+```
+
+Also used as a type definition when defining a integer variable or constant, see [CONST](#const) and [LET](#let), and a function for parsing a string to an integer.
 
 [Variable](#let) or type integer
 
@@ -505,13 +520,6 @@ A [block scoped variable](#block-scoped-variables) with type integer
 FOR INT I = 0 TO 9
 PRINT I
 NEXT
-```
-
-The `INT` function can be used to convert a string to an integer.
-
-```basic
-RETURN_INT = INT(STRING_VALUE)
-B = INT("255")
 ```
 
 ### Labels
@@ -658,7 +666,19 @@ ON X GOSUB 10, 20, 30
 
 ### PRINT
 
-For printing text to the screen.
+Outputs PETSCII text and characters to the screen at the current cursor position. Multiple strings and PETSCII byte values can be chained with commas without inserting extra spaces or trailing newlines (use 13 explicitly when you want a carriage return).
+
+```basic
+PRINT STRING
+PRINT "HELLO"
+
+LET STRING NM = "RAPTOR"
+PRINT "HELLO ", NM
+
+PRINT BYTE
+REM PRINT WITH EXPLICIT RETURN
+PRINT "HELLO RAPTOR", 13
+```
 
 ### PEEK
 
@@ -815,18 +835,34 @@ REM THIS IS A COMMENT
 
 ### RND
 
-### RPTSTR
+Random number generator.
+
+### RPT
 
 Returns a string of repeated characters X number of times.
 
 ```basic
-RETURN_STR = RPTSTR(CHAR, COUNT)
-S = RPTSTR("*", 10)
+RETURN_STR = RPT(CHAR, COUNT)
+
+S = RPT("*", 10)
 ```
 
 ### RUN
 
 Starts the program execution. This will first run [LINK](#link) if the program status is dirty, then runs the program.
+
+### SCR
+
+Returns the C64 screen code corresponding to a PETSCII character, making it easy to write readable characters to screen memory without memorizing screen code numbers.
+
+"A" -> 65 -> 1
+
+```basic
+REG_VAL = SCR(CHAR)
+C = SCR("A")
+
+POKE 1024, SCR("A")
+```
 
 ### STR
 
@@ -834,13 +870,22 @@ String are a type of array that require a length to be defined. This is due to h
 
 `{type}{name x2}{length}{size}{data...}`
 
+The `STR` function can be used to convert a number to a string.
+
+```basic
+LET STR[4] NM
+NM = STR(1234)
+```
+
+Also used as a type definition when defing string variables.
+
 Define a string by explicit length.
 
 ```basic
 LET STR[10] SV
 ```
 
-Define a string with an implicit length and default value.
+Define a string with an implicit length based on the default value.
 
 ```basic
 LET STR SV = "HELLO"
@@ -859,16 +904,9 @@ LET STRING HI = "HELLO"
 HI = 0
 ```
 
-The `STR` function can be used to convert a number to a string.
-
-```basic
-LET STR[4] NM
-NM = STR(1234)
-```
-
 ### SUBSTR
 
-Returns party of a string.
+Returns part of a string.
 
 ```basic
 RETURN_STR = SUBSTR(STR_REF, START_POS, LENGTH)
@@ -897,6 +935,7 @@ Write from static array to consecutive registers.
 ```basic
 WRITE 1024, [1, 2, 3]
 ```
+
 This would write ABC at the beginning of the screen.
 
 Write from array variable.
@@ -911,6 +950,7 @@ Write to non consecutive registers by step interval.
 ```basic
 WRITE 1024, BA STEP 40
 ```
+
 This would write vertically on the screen.
 
 You can also write from an int value instead of an array to allow a simplified way to update registers that are designed to hold int values (such as SID frequency and pulse width.)
