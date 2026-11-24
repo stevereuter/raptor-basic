@@ -126,31 +126,43 @@ Inline FN will do the same thing with a hidden ENDFN keyword at the end of the l
 ## Assignment operators
 
 Assign the value of 25:
+```basic
 B = 25
+```
 
 Assign a run time value based on a condition:
 Ternary operator (condition) ? assign if true : assign if false
+```basic
 B = (A == 5) ? 1 : 0
+```
 
 Using shorthand to add to and subtract from the variable value:
+```basic
 B += 10 (B = B + 10)
 B -= 10 (B = B - 10)
+```
 
 Shorthand for single increment and decrement:
+```basic
 B++ (B = B + 1)
 B-- (B = B - 1)
+```
 
 Using shorthand to multiply and divide the variable value:
+```basic
 B \* = 10 (B = B \* 10)
 B /= 10 (B = B / 10)
+```
 
 ## Comparison operators
 
 Comparison operators are evaluated using a false value of 0. All other values are considereed truethy.
 
+```basic
 IF A THEN PRINT "TRUE"
 
 IF !A THEN PRINT "FALSE"
+```
 
 | Comparison               | Expression |
 | ------------------------ | ---------: |
