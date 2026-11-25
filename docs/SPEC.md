@@ -109,6 +109,12 @@ They do not need to be in this order, but if the program is not last it will req
 ### Line entry
 
 Nested functions will be written first to anonymous variables which will be referenced as the parent functions parameter.
+TODO:
+
+1. write the line into zp
+2. generate byte code at end of program RAM
+3. shift nested functions
+4. add to program or execute
 
 ### AOT line linker
 
@@ -126,29 +132,34 @@ Inline FN will do the same thing with a hidden ENDFN keyword at the end of the l
 ## Assignment operators
 
 Assign the value of 25:
+
 ```basic
 B = 25
 ```
 
 Assign a run time value based on a condition:
 Ternary operator (condition) ? assign if true : assign if false
+
 ```basic
 B = (A == 5) ? 1 : 0
 ```
 
 Using shorthand to add to and subtract from the variable value:
+
 ```basic
 B += 10 (B = B + 10)
 B -= 10 (B = B - 10)
 ```
 
 Shorthand for single increment and decrement:
+
 ```basic
 B++ (B = B + 1)
 B-- (B = B - 1)
 ```
 
 Using shorthand to multiply and divide the variable value:
+
 ```basic
 B \* = 10 (B = B \* 10)
 B /= 10 (B = B / 10)
@@ -626,6 +637,15 @@ A block of code is code that has a specific start and end point that is only rea
 ### LINK
 
 AOT interpreter pre-run variable and line linking. Can be run independently so that the program can be saved in a ready state.
+TODO:
+
+1. write constants
+2. link variables
+3. link labels
+4. link functions
+5. link subroutines
+6. link block variables
+7. link anonymous variables
 
 ### LIST
 
@@ -708,7 +728,7 @@ V = PULL(Q)
 
 ### PUSH
 
-Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE. 
+Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE.
 Now if the `QUE` is full, the bottom value will be dropped.
 
 ```basic
@@ -782,13 +802,13 @@ B = PULL(QB)
 To allow the queue to work continuously, when a push occurs with top at the max index, it will be set to 0 and the value added in the first index. Values will constantly loop in this way.
 Pushing a 6th value to a queue with a size of 5 would hit the zero state of a negative 1 offset causing the bottom to be incremented and lost.
 
-| 0   | 1   | 2   | 3   | 4   | 5   |
-| --- | --- | --- | --- | --- | --- |
-| top |     |     |     |     |     |
+| 0   | 1       | 2   | 3   | 4   | 5   |
+| --- | ------- | --- | --- | --- | --- |
+| top |         |     |     |     |     |
 | 60  | 10 lost | 20  | 30  | 40  | 50  |
-|     | bot ->|  bot   |     |     |     |
+|     | bot ->  | bot |     |     |     |
 
-TODO: May drop this in favor of specific subroutines as this will create large anonymous variables. 
+TODO: May drop this in favor of specific subroutines as this will create large anonymous variables.
 The `QUE` keyword can also be used to get all the current data from bottom to top.
 
 ```basic
@@ -866,7 +886,7 @@ LET STR[4] NM
 NM = STR(1234)
 ```
 
-The `STR` keyword is also used for your definition in variables and constants. 
+The `STR` keyword is also used for your definition in variables and constants.
 
 String are a type of array that require a length to be defined. This is due to how Raptor BASIC stores all data within the program. See [DIM](#dim) for more details. The main difference between a string and array is that the size is split into 2 values, the first byte is the length and the second is the size. This means string are limited to 255 in length. When [LEN](#len) is used it will only return the length data.
 
