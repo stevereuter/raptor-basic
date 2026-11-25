@@ -788,7 +788,7 @@ Pushing a 6th value to a queue with a size of 5 would hit the zero state of a ne
 | 60  | 10 lost | 20  | 30  | 40  | 50  |
 |     | bot ->|  bot   |     |     |     |
 
-TODO: May do this in favor of specific subroutines as this will create large anonymous variables. 
+TODO: May drop this in favor of specific subroutines as this will create large anonymous variables. 
 The `QUE` keyword can also be used to get all the current data from bottom to top.
 
 ```basic
