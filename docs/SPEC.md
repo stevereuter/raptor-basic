@@ -730,7 +730,7 @@ V = PULL(Q)
 
 ### PUSH
 
-Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE.
+Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE. If the `QUE` is full, the bottom value will be dropped.
 
 ```basic
 PUSH QUE_REF, VALUE
@@ -739,7 +739,7 @@ PUSH QUE, 25
 
 ### QUE
 
-A queue is an array with a top and bottom pointer for tracking items that are added and removed. A negative 1 offset is used for an empty state which requires an extra register in the array to allow for the correct length. If a pointer reaches either end of the index range, they will loop to the other end based on the current action. This allows value to be continuosly added as long as the 2 pointers don't meet. The [PUSH](#push), [PULL](#pull), and [POP](#pop) functions are used to add and remove value based on FIFO or FILO principals. The [TOP](#top) and [BOT](#bot) can be used to return the end values without moving the pointers.
+A queue is an array with a top and bottom pointer for tracking items that are added and removed. A negative 1 offset is used for an empty state which requires an extra register in the array to allow for the correct length. If a pointer reaches either end of the index range, they will loop to the other end based on the current action. This allows values to be continuosly added. The [PUSH](#push), [PULL](#pull), and [POP](#pop) functions are used to add and remove value based on FIFO or FILO principals. The [TOP](#top) and [BOT](#bot) can be used to return the end values without moving the pointers. The reference can be passed to array type subroutines to return all the items from the bottom to the top.
 
 `{type}{name x2}{size x2}{top x2}{bottom x2}{data...}`
 
