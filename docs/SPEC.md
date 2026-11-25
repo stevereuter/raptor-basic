@@ -230,7 +230,7 @@ Function examples operating within expressions and subroutines
 
 ```Basic
 LET BYTE X = ABS(Y)
-PRINT LEFT$(S, 1)
+PRINT LEFT(S, 1)
 ```
 
 ## System Stack
@@ -258,27 +258,9 @@ RETURN_VALUE = BOT(QUE_REFERENCE)
 B = BOT(Q)
 ```
 
-### BREAK (TBD)
-
-TODO: this is not really needed as GOTO can be used to achieve the same goal, this would be syntactical sugar that would require some walking to resolve as it would essentially a target less GOTO
-
-The `BREAK` keyword can be used to break out of the current block. It is essentially a `GOTO` without a line number. It will store the register of end block part of code to jump to and do a `GOTO` to that position.
-
-```basic
-SUB DRAW
-PRINT "DRAWING"
-BREAK (this is the same GOTO the line with ENDSUB)
-REM SKIPPED
-ENDSUB
-
-FOR I IN [1, 2, 3]
-IF I == 2 THEN BREAK (this is the same as a GOTO after the NEXT)
-NEXT
-```
-
 ### BYTE
 
-The `BYTE` function can be used to convert a string to a byte
+The `BYTE` function can be used to convert a string to a byte.
 
 ```basic
 RETURN_BYTE = BYTE(STRING_VALUE)
@@ -319,14 +301,14 @@ CONST BYTE A = 10, B = 20, C = 20
 
 ### DEF FN
 
-For defining custom functions that return a value from any part of the program. Functions use 3 character names, can have 1 to 3 parameters which work like [block scope variables](#temporary-block-scope-variables), and return a value. Functions can be written 2 ways.
+For defining custom functions that return a value from any part of the program. Functions use 3-4 character names, can have 1 to 3 parameters which work like [block scope variables](#temporary-block-scope-variables), and return a value. Functions can be written 2 ways.
 
 **_Inline functions_** are for simple calculations and address immediately returned.
 
 ```basic
 DEF FN NAME(PARAM_1, PARAM_2, PARAM_3) => RETURN_OPEEATION
 
-DEF FN RLL(BYTE D) => RND(D) + 1
+DEF FN ROLL(BYTE D) => RND(D) + 1
 ```
 
 **_Block Functions_** can be any number of lines, must return a value using [RETURN](#RETURN), and must end using [ENDFN](#endfn).
@@ -453,7 +435,7 @@ GOSUB DRAW
 
 #### SUB
 
-User defined subroutine definition. A subroutine is any block of code that starts with `SUB` ends with [ENDSUB](#endsub). Which is used to return to the [GOSUB](#gosub) command that called it. A `SUB` can be called by name which must be 3 characters or by line number. These should only be reached via a `GOSUB` due to how the [Stack](#system-stack) is used.
+User defined subroutine definition. A subroutine is any block of code that starts with `SUB` ends with [ENDSUB](#endsub). Which is used to return to the [GOSUB](#gosub) command that called it. A `SUB` can be called by name which must be 3-4 characters or by line number. These should only be reached via a `GOSUB` due to how the [Stack](#system-stack) is used.
 
 #### ENDSUB
 
@@ -471,7 +453,7 @@ ENDSUB
 
 Used to conditionally execute code. The `IF` code will be executed when the condition evaluates to a truthy value, and an `ELSE` can be used to execute values of a falsy value. There are 2 ways to write an `IF` statement.
 
-**_Inline IF Statements_** are writton on a single line and can be used to either execute code or jump to a line.
+**_Inline IF Statements_** are written on a single line and can be used to jump to a line.
 
 Using if to jump to lines of code.
 
@@ -529,7 +511,7 @@ CONST INT CB = 25
 A [block scoped variable](#block-scoped-variables) with type integer
 
 ```basic
-FOR INT I = 0 TO 9
+FOR INT I = 1000 TO 1009
 PRINT I
 NEXT
 ```
@@ -556,7 +538,7 @@ L = LEFT(SV, 2)
 
 ### LEN
 
-Returns the length byte value from an array. For [DIM](#dim) type arrays ([BYTE](#byte), [INT](#int), [QUE](#que)) the size of the array is returned. For [STR](#str) the length is returned.
+Returns the length byte value from an array. For regular number [DIM](#dim) type arrays, ([BYTE](#byte) and [INT](#int), the size of the array is returned. For [STR](#str) the length is returned. For [QUE](#que)) the range is used (difference for bottom to top.)
 
 ```basic
 RETURN_VAL = LEN(ARRAY)
@@ -580,7 +562,6 @@ Memory: {type}{name x2}{value base on data type} (byte 4, int 5)
 
 ```basic
 LET BYTE B
-LET CHAR C (TODO: do we really need another byte with an auto parser)
 LET INT I
 ```
 
@@ -596,12 +577,6 @@ Memory: {type}{name x2}{value base on data type}{default value} (byte 5, int 7)
 ```basic
 LET BYTE B = 255
 LET INT I = 1000
-```
-
-Single characters can be stored and will use a single byte containing the PETSCII value, and printing these variables would output the string representation.
-
-```basic
-LET CHAR C = "C"
 ```
 
 #### Block Scoped Variables
@@ -655,6 +630,7 @@ AOT interpreter pre-run variable and line linking. Can be run independently so t
 ### LIST
 
 For listing the program lines in the readable form.
+TODO: need to add short cuts and filters
 
 ### ON
 
@@ -713,6 +689,7 @@ POKE 57280, 1
 ### POP
 
 Returns the bottom value from a [QUE](#que) and updates the bottom index pointer. Unlike [BOT](#bot), this will essentially remove the value returned as it is now beyond the index pointer.
+Note that if the `QUE` is empty, zero is returned.
 
 ```basic
 VALUE = POP(QUE_REF)
@@ -722,6 +699,7 @@ V = POP(Q)
 ### PULL
 
 Returns the top value from a [QUE](#que) and updates the top index pointer. Unlike [TOP](#top), this will essentially remove the value returned as it is now beyond the index pointer.
+Note that if the `QUE` is empty, zero is returned.
 
 ```basic
 VALUE = PULL(QUE_REF)
@@ -730,7 +708,8 @@ V = PULL(Q)
 
 ### PUSH
 
-Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE. If the `QUE` is full, the bottom value will be dropped.
+Pushes the value to the top of a [QUE](#que) and updates the top index pointer. This is the only way to add values to a QUE. 
+Now if the `QUE` is full, the bottom value will be dropped.
 
 ```basic
 PUSH QUE_REF, VALUE
@@ -739,7 +718,7 @@ PUSH QUE, 25
 
 ### QUE
 
-A queue is an array with a top and bottom pointer for tracking items that are added and removed. A negative 1 offset is used for an empty state which requires an extra register in the array to allow for the correct length. If a pointer reaches either end of the index range, they will loop to the other end based on the current action. This allows values to be continuosly added. The [PUSH](#push), [PULL](#pull), and [POP](#pop) functions are used to add and remove value based on FIFO or FILO principals. The [TOP](#top) and [BOT](#bot) can be used to return the end values without moving the pointers. The reference can be passed to array type subroutines to return all the items from the bottom to the top.
+A queue is an array with a top and bottom pointer for tracking items that are added and removed. A negative 1 offset is used for an empty state which requires an extra register in the array to allow for the correct length. So a queue with a size of 10 will actually use 11 registers. If a pointer reaches either end of the index range, they will loop to the other end based on the current action. This allows values to be continuosly added. The [PUSH](#push), [PULL](#pull), and [POP](#pop) functions are used to add and remove value based on FIFO or FILO principals. The [TOP](#top) and [BOT](#bot) can be used to return the end values without moving the pointers. The reference can be passed to array type subroutines to return all the items from the bottom to the top.
 
 `{type}{name x2}{size x2}{top x2}{bottom x2}{data...}`
 
@@ -800,15 +779,16 @@ B = PULL(QB)
 | 10  | 20  | 30  |     |     |     |
 |     | bot |     |     |     |     |
 
-To allow the queue to work continuously, wne a push occurs with top at the max index, it will be set to 0 and the value added in the first index. Values will constantly loop in this way.
-Pushing a 6th value to a queue with a size of 5 would hit the zero state of a negative 1 offset and all values would be lost. So it's important to use the correct size.
+To allow the queue to work continuously, when a push occurs with top at the max index, it will be set to 0 and the value added in the first index. Values will constantly loop in this way.
+Pushing a 6th value to a queue with a size of 5 would hit the zero state of a negative 1 offset causing the bottom to be incremented and lost.
 
 | 0   | 1   | 2   | 3   | 4   | 5   |
 | --- | --- | --- | --- | --- | --- |
 | top |     |     |     |     |     |
-| 60  | 10  | 20  | 30  | 40  | 50  |
-|     | bot |     |     |     |     |
+| 60  | 10 lost | 20  | 30  | 40  | 50  |
+|     | bot ->|  bot   |     |     |     |
 
+TODO: May do this in favor of specific subroutines as this will create large anonymous variables. 
 The `QUE` keyword can also be used to get all the current data from bottom to top.
 
 ```basic
@@ -851,6 +831,7 @@ Random number generator.
 
 ### RPT
 
+TODO: Evaluate the need for this as it could create large anonymous variables which can not be determined at run time.
 Returns a string of repeated characters X number of times.
 
 ```basic
@@ -878,10 +859,6 @@ POKE 1024, SCR("A")
 
 ### STR
 
-String are a type of array that require a length to be defined. This is due to how Raptor BASIC stores all data within the program. See [DIM](#dim) for more details. The main difference between a string and array is that the size is split into 2 values, the first byte is the length and the second is the size. This means string are limited to 255 in length. When [LEN](#len) is used it will only return the length data.
-
-`{type}{name x2}{length}{size}{data...}`
-
 The `STR` function can be used to convert a number to a string.
 
 ```basic
@@ -889,7 +866,11 @@ LET STR[4] NM
 NM = STR(1234)
 ```
 
-Also used as a type definition when defing string variables.
+The `STR` keyword is also used for your definition in variables and constants. 
+
+String are a type of array that require a length to be defined. This is due to how Raptor BASIC stores all data within the program. See [DIM](#dim) for more details. The main difference between a string and array is that the size is split into 2 values, the first byte is the length and the second is the size. This means string are limited to 255 in length. When [LEN](#len) is used it will only return the length data.
+
+`{type}{name x2}{length}{size}{data...}`
 
 Define a string by explicit length.
 
