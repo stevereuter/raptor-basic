@@ -40,18 +40,19 @@ Raptor BASIC operates through four distinct processing phases:
 
 As the program is interpreted AOT, not all lines will be processed at run-time. Due to this the code should be split into distinct parts to prevent reading unnecessary code. All variable definitions, functions, and subroutines should be grouped individually, and the main program code on its own.
 
+- constants
 - variables
 - functions
 - subroutines
 - program
 
-They do not need to be in this order, but if the program is not last it will require the [END](#end) keyword to signal a stop.
+They do not need to be in this order, but if the program is not last it will require the [END](#end) keyword to signal a stop. At runtime only the program section is executed. The other sections are linked by the AOT interpreter.
 
 ### Zero Page usage
 
 - **Entry:** Holds input stream and parsed byte code line
 - **Linker:** Holds pointer references
-- **Runtime:** Holds status and function values
+- **Runtime:** Holds status, function values, and return stack
 - **List:** Holds byte code line and parsed readable line
 
 #### Input Layout
@@ -246,6 +247,8 @@ PRINT LEFT(S, 1)
 
 ## System Stack
 
+TODO: this needs to be rewritten for the new runtime stack
+
 The hardware stack is used when jumping to a function or subroutine so that the interpreter can return to the part of the progrem that if left. All system functions and subroutines do this automatically. For user define functions and subroutines this is handled with specific keywords.
 
 Used to push the current position into the stack:
@@ -317,7 +320,7 @@ For defining custom functions that return a value from any part of the program. 
 **_Inline functions_** are for simple calculations and address immediately returned.
 
 ```basic
-DEF FN NAME(PARAM_1, PARAM_2, PARAM_3) => RETURN_OPEEATION
+DEF FN NAME([PARAM_1, PARAM_2, PARAM_3]) => RETURN_OPEEATION
 
 DEF FN ROLL(BYTE D) => RND(D) + 1
 ```
@@ -338,7 +341,7 @@ For setting the return value in user defined block functions. This will also tri
 
 #### ENDFN
 
-For defining the end of a user defined block function.
+For defining the end of a user defined block function. This will pull the past location from the runtime stack to return the program back to the point where the function was called.
 
 ### DIM
 
@@ -463,6 +466,7 @@ ENDSUB
 ### IF
 
 Used to conditionally execute code. The `IF` code will be executed when the condition evaluates to a truthy value, and an `ELSE` can be used to execute values of a falsy value. There are 2 ways to write an `IF` statement.
+*Memory note*: Due to the LTR processing, anonymous variables will be added to the code before the IF statement when compassion operators are used.
 
 **_Inline IF Statements_** are written on a single line and can be used to jump to a line.
 
