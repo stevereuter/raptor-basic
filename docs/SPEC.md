@@ -46,33 +46,56 @@ As the program is interpreted AOT, not all lines will be processed at run-time. 
 - subroutines
 - program
 
-They do not need to be in this order, but if the program is not last it will require the [END](#end) keyword to signal a stop. At runtime only the program section is executed. The other sections are linked by the AOT interpreter.
+They do not need to be in this order, but if the program is not last it will require the [END](#end) keyword to signal a stop. At runtime only the program section is executed. The other sections are linked by the AOT interpreter. The program is written with a single instruction per line. Some instructions are written in blocks over multiple lines that contain other instructions, such as a `FOR` loop.
 
 ### Zero Page usage
 
 - **Entry:** Holds input stream and parsed byte code line
-- **Linker:** Holds pointer references
+- **Linker:** Holds pointer references (may not be needed)
 - **Runtime:** Holds status, function values, and return stack
-- **List:** Holds byte code line and parsed readable line
+- **List:** Holds the parsed readable line
 
 #### Input Layout
+
+TODO: Streams the entry into $0C (up to 84 characters) and adds the length to $03.
 
 #### Run Time Layout
 
 | Register | Use                     |
-| -------- | ----------------------- |
-| $03      | status                  |
-| $04      | return value holder     |
-| $06      | first parameter holder  |
-| $08      | second parameter holder |
-| $0a      | third parameter holder  |
-| $0c.     | temporary storage       |
+| ---- | --------------------- |
+| $03 | stack length     |
+| $04 | program position |
+| $06 | return value holder |
+| $08 | first parameter holder |
+| $0A | second parameter holder |
+| $0C | third parameter holder |
+| $0E | temporary storage     |
+| $10 | call stack |
 
 ### Program header
+
+| Register | Use |
+| --- | --- |
+| $0801 | State |
+| $0802-5 | constants pointers |
+| $0806-9 | variable pointers |
+| $080A-D | function pointers |
+| $080E-11 | subroutine pointers |
+| $0802-$9FFF | program pointers |
 
 ## Interpreter
 
 ### Type system
+
+Once the program is interpreted it's stored as byte code. Everything to be processed is defined by a type definition that the runtime interpreter uses to execute the program. After the type definition will be the data that is needed for the type. For example a `PRINT "HELLO"` instruction would contain: 
+
+- type of system function with 1 parameter
+- PRINT system ID
+- PRINT sub pointers 
+- type of static string value for the parameter
+- string length
+- string size
+- string data
 
 #### General
 
@@ -114,21 +137,45 @@ TODO:
 
 1. write the line into zp
 2. generate byte code at end of program RAM
-3. shift nested functions
-4. add to program or execute
+3. shift nested functions to the front and add anonymous variables
+4. remove spaces
+5. add to program or execute
+
+| Register | Use                     |
+| ---- | --------------------- |
+| $03 | stack length     |
+| $04 | program position |
+| $10 | call stack |
 
 ### AOT line linker
 
+May not be needed
+
 ### AOT variable resolver
+
+May not be needed
 
 ### AOT block scoped variable resolver
 
-Functions and subroutines will push the return register into the hardware stack. The end keywords will pop the register and jump back to the program.
+Functions and subroutines will push the return register into the runtime stack. The end keywords will pop the register and jump back to the program.
 
 GOSUB and FN will push the next register into the stack. ENDSUB and ENDFN will pull register and jump.
 Inline FN will do the same thing with a hidden ENDFN keyword at the end of the line.
 
 ### Run time processor
+
+TODO: this looks like a duplicate
+
+| Register | Use                     |
+| ---- | --------------------- |
+| $03 | stack length     |
+| $04 | program position |
+| $06 | return value holder |
+| $08 | first parameter holder |
+| $0A | second parameter holder |
+| $0C | third parameter holder |
+| $0E | temporary storage     |
+| $10 | call stack |
 
 ## Assignment operators
 
