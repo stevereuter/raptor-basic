@@ -38,7 +38,7 @@ Raptor BASIC operates through four distinct processing phases:
 
 ## Program Structure
 
-As the program is interpreted AOT, not all lines will be processed at run-time. Due to this the code should be split into distinct parts to prevent reading unnecessary code. All variable definitions, functions, and subroutines should be grouped individually, and the main program code on its own.
+Programs should be split into distinct parts. All variable definitions, functions, and subroutines should be grouped together, and the main program code on its own. These sections will act as lookup tables during linking. The first and last instance of these is stored in the program header.
 
 - constants
 - variables
@@ -46,52 +46,63 @@ As the program is interpreted AOT, not all lines will be processed at run-time. 
 - subroutines
 - program
 
-They do not need to be in this order, but if the program is not last it will require the [END](#end) keyword to signal a stop. At runtime only the program section is executed. The other sections are linked by the AOT interpreter. The program is written with a single instruction per line. Some instructions are written in blocks over multiple lines that contain other instructions, such as a `FOR` loop.
+These section do not need to be in this order, but if the program is not last it will require the [END](#end) keyword to signal a stop. As the first for sections are only used by the AOT process, only the program section is executed at run-time.
+
+The program is written with a single instruction per line, although some instructions have multiple parts that are written in blocks over multiple lines that contain other instructions, such as a `FOR` loop.
+
+Each line in the program will start with the line number and the length of the line. The length will be used for jumps and line shifting.
+
+{type}{line number x2}{length}{...instruction}
 
 ### Zero Page usage
 
-- **Entry:** Holds input stream and parsed byte code line
+- **Entry:** Holds input stream
 - **Linker:** Holds pointer references (may not be needed)
 - **Runtime:** Holds status, function values, and return stack
 - **List:** Holds the parsed readable line
 
 #### Input Layout
 
-TODO: Streams the entry into $0C (up to 84 characters) and adds the length to $03.
+Streams the entry into $0C (up to 84 characters) and adds the length to $03.
+
+| Register | Use             |
+| -------- | --------------- |
+| $03      | line length     |
+| $0C      | line characters |
 
 #### Run Time Layout
 
 | Register | Use                     |
-| ---- | --------------------- |
-| $03 | stack length     |
-| $04 | program position |
-| $06 | return value holder |
-| $08 | first parameter holder |
-| $0A | second parameter holder |
-| $0C | third parameter holder |
-| $0E | temporary storage     |
-| $10 | call stack |
+| -------- | ----------------------- |
+| $03      | stack length            |
+| $04      | program position        |
+| $06      | return value holder     |
+| $08      | first parameter holder  |
+| $0A      | second parameter holder |
+| $0C      | third parameter holder  |
+| $0E      | temporary storage       |
+| $10      | call stack              |
 
 ### Program header
 
-| Register | Use |
-| --- | --- |
-| $0801 | State |
-| $0802-5 | constants pointers |
-| $0806-9 | variable pointers |
-| $080A-D | function pointers |
-| $080E-11 | subroutine pointers |
-| $0802-$9FFF | program pointers |
+| Register    | Use                 |
+| ----------- | ------------------- |
+| $0801       | State               |
+| $0802-5     | constants pointers  |
+| $0806-9     | variable pointers   |
+| $080A-D     | function pointers   |
+| $080E-11    | subroutine pointers |
+| $0802-$9FFF | program pointers    |
 
 ## Interpreter
 
 ### Type system
 
-Once the program is interpreted it's stored as byte code. Everything to be processed is defined by a type definition that the runtime interpreter uses to execute the program. After the type definition will be the data that is needed for the type. For example a `PRINT "HELLO"` instruction would contain: 
+Once the program is interpreted it's stored as byte code. Everything to be processed is defined by a type definition that the runtime interpreter uses to execute the program. After the type definition will be the data that is needed for the type. For example a `PRINT "HELLO"` instruction would contain:
 
 - type of system function with 1 parameter
 - PRINT system ID
-- PRINT sub pointers 
+- PRINT sub pointers
 - type of static string value for the parameter
 - string length
 - string size
@@ -99,14 +110,14 @@ Once the program is interpreted it's stored as byte code. Everything to be proce
 
 #### General
 
-| Bit     | Description | Values                                      |
-| ------- | ----------- | ------------------------------------------- |
-| 1       | source      | 0: system 1: user                           |
-| 2 and 3 | data        | 00: byte, 01: int, 10: string, 11: function |
-| 4       | mutable     | 0: static, 1: variable                      |
-| 5       | array       | 0: single, 1: array                         |
-| 6       | value       | 0: value, 1: reference                      |
-| 7 and 8 | options     | func param count/scope level 0 - 3          |
+| Bit     | Description | Values                                                               |
+| ------- | ----------- | -------------------------------------------------------------------- |
+| 1       | source      | 0: system (named sub/func) 1: user (lines, varables, fn, sub)        |
+| 2 and 3 | data type   | 00: byte, 01: int, 10: string, 11: function                          |
+| 4       | mutable     | 0: no, static, 1: yes, variable                                      |
+| 5       | array       | 0: no, single, 1: yes, array                                         |
+| 6       | value type  | 0: source, 1: reference                                              |
+| 7 and 8 | options     | param count/number type 0: line, 1: variable, 2: scope, 3: anonymous |
 
 #### Variables
 
@@ -132,20 +143,19 @@ Once the program is interpreted it's stored as byte code. Everything to be proce
 
 ### Line entry
 
-Nested functions will be written first to anonymous variables which will be referenced as the parent functions parameter.
-TODO:
+This is the part of the interpreter that takes the input for the user and processes it. The input stream is first converted into byte code, then either written to the program RAM or executed. Nested functions will be moved to the front of the line and stored in anonymous variables which will be referenced as the parent functions parameter to allow for the LTR program flow.
 
-1. write the line into zp
+1. write the line into zero page
 2. generate byte code at end of program RAM
 3. shift nested functions to the front and add anonymous variables
 4. remove spaces
 5. add to program or execute
 
-| Register | Use                     |
-| ---- | --------------------- |
-| $03 | stack length     |
-| $04 | program position |
-| $10 | call stack |
+| Register | Use              |
+| -------- | ---------------- |
+| $03      | stack length     |
+| $04      | program position |
+| $10      | call stack       |
 
 ### AOT line linker
 
@@ -167,15 +177,15 @@ Inline FN will do the same thing with a hidden ENDFN keyword at the end of the l
 TODO: this looks like a duplicate
 
 | Register | Use                     |
-| ---- | --------------------- |
-| $03 | stack length     |
-| $04 | program position |
-| $06 | return value holder |
-| $08 | first parameter holder |
-| $0A | second parameter holder |
-| $0C | third parameter holder |
-| $0E | temporary storage     |
-| $10 | call stack |
+| -------- | ----------------------- |
+| $03      | stack length            |
+| $04      | program position        |
+| $06      | return value holder     |
+| $08      | first parameter holder  |
+| $0A      | second parameter holder |
+| $0C      | third parameter holder  |
+| $0E      | temporary storage       |
+| $10      | call stack              |
 
 ## Assignment operators
 
@@ -294,9 +304,7 @@ PRINT LEFT(S, 1)
 
 ## System Stack
 
-TODO: this needs to be rewritten for the new runtime stack
-
-The hardware stack is used when jumping to a function or subroutine so that the interpreter can return to the part of the progrem that if left. All system functions and subroutines do this automatically. For user define functions and subroutines this is handled with specific keywords.
+The custom zero page stack is used when jumping to a function or subroutine that requires so that the interpreter can return to the part of the progrem that if left. All system functions and subroutines do this automatically using RTS. For user define functions and subroutines this is handled with specific keywords.
 
 Used to push the current position into the stack:
 
@@ -307,6 +315,8 @@ Use to pop the position off of the stack and continue the interpreter:
 
 - [ENDFN](#endfn)
 - [ENDSUB](#endsub)
+
+The stack has an index and values. When the pointer is 0 it points to the first byte in the stack data. When a 16 bit address is added, the pointer is incremented on each byte ending on the next empty register. So if the value is 2 there is 1 address in memory.
 
 ## System Keywords
 
@@ -513,7 +523,7 @@ ENDSUB
 ### IF
 
 Used to conditionally execute code. The `IF` code will be executed when the condition evaluates to a truthy value, and an `ELSE` can be used to execute values of a falsy value. There are 2 ways to write an `IF` statement.
-*Memory note*: Due to the LTR processing, anonymous variables will be added to the code before the IF statement when compassion operators are used.
+_Memory note_: Due to the LTR processing, anonymous variables will be added to the code before the IF statement when compassion operators are used.
 
 **_Inline IF Statements_** are written on a single line and can be used to jump to a line.
 
